@@ -1,4 +1,4 @@
-# 🛍 Zukhra Boutique — Telegram Mini App kiyim do'koni
+# 🛍 Demo Boutique — Telegram Mini App kiyim do'koni
 
 Uchta qismdan iborat loyiha:
 

@@ -24,7 +24,7 @@ const config = {
   jwtSecret: process.env.JWT_SECRET || 'dev_secret_change_me',
   allowInsecureAuth: process.env.ALLOW_INSECURE_AUTH === 'true',
 
-  shopName: process.env.SHOP_NAME || "Zukhra Boutique",
+  shopName: process.env.SHOP_NAME || 'Demo Boutique',
   currency: process.env.CURRENCY || "so'm",
 
   delivery: {
