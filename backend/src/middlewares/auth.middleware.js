@@ -58,7 +58,12 @@ export async function telegramAuth(req, res, next) {
     }
 
     if (!tgUser) {
-      return res.status(401).json({ ok: false, error: 'Telegram autentifikatsiyasi muvaffaqiyatsiz' });
+      // Ikki xil sabab bor — ularni ajratib ko'rsatamiz, aks holda nimani
+      // tuzatish kerakligi noma'lum bo'lib qoladi.
+      const error = initData
+        ? 'Telegram imzosi mos kelmadi — BOT_TOKEN boshqa botniki bo\'lishi mumkin'
+        : "Mini App Telegram orqali ochilmagan — bot menyusidagi tugma bilan oching";
+      return res.status(401).json({ ok: false, error, reason: initData ? 'bad_signature' : 'no_init_data' });
     }
 
     req.user = await UserModel.upsertFromTelegram(tgUser);
