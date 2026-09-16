@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+//  MIJOZ
+// ============================================================
+model User {
+  id         Int      @id @default(autoincrement())
+  telegramId String   @unique
+  firstName  String
+  lastName   String?
+  username   String?
+  phone      String?
+  language   String   @default("uz")
+  seenIntro  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders    Order[]
+  favorites Favorite[]
+
+  @@index([telegramId])
+}
+
+// ============================================================
+//  KATEGORIYA
+// ============================================================
+model Category {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  nameUz    String
+  nameRu    String
+  emoji     String   @default("👕")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  products Product[]
+}
+
+// ============================================================
+//  MAHSULOT (kiyim)
+// ============================================================
+model Product {
+  id         Int      @id @default(autoincrement())
+  nameUz     String
+  nameRu     String
+  descUz     String   @db.Text
+  descRu     String   @db.Text
+  // Tarkibi / xususiyatlari — bullet-point ro'yxat
+  featuresUz String[] @default([])
+  featuresRu String[] @default([])
+  images     String[] @default([])
+  oldPrice   Int?
+  price      Int
+  brand      String?
+  materialUz String?
+  materialRu String?
+  categoryId Int
+  isActive   Boolean  @default(true)
+  isNew      Boolean  @default(false)
+  isHit      Boolean  @default(false)
+  soldCount  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category  Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants  ProductVariant[]
+  favorites Favorite[]
+
+  @@index([categoryId])
+}
+
+// ============================================================
+//  O'LCHAM / RANG VARIANTLARI (ombor qoldig'i)
+// ============================================================
+model ProductVariant {
+  id        Int    @id @default(autoincrement())
+  productId Int
+  size      String // XS, S, M, L, XL, XXL yoki 36, 38, 40...
+  colorUz   String
+  colorRu   String
+  colorHex  String @default("#000000")
+  stock     Int    @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, size, colorHex])
+  @@index([productId])
+}
+
+// ============================================================
+//  SEVIMLILAR (Wishlist)
+// ============================================================
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+// ============================================================
+//  PROMOKOD
+// ============================================================
+model Promo {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique
+  type       PromoType @default(PERCENT)
+  value      Int // PERCENT -> foiz, FIXED -> so'm
+  minTotal   Int       @default(0)
+  usageLimit Int       @default(0) // 0 = cheksiz
+  usedCount  Int       @default(0)
+  isActive   Boolean   @default(true)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+enum PromoType {
+  PERCENT
+  FIXED
+}
+
+// ============================================================
+//  STORIES (Instagram uslubidagi doiralar)
+// ============================================================
+model Story {
+  id        Int      @id @default(autoincrement())
+  titleUz   String
+  titleRu   String
+  coverUrl  String
+  imageUrl  String
+  productId Int?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+//  BUYURTMA
+// ============================================================
+model Order {
+  id      Int    @id @default(autoincrement())
+  orderNo String @unique
+  userId  Int
+
+  // Buyurtma tarkibi (JSON): [{ productId, name, image, size, color, price, qty }]
+  items Json
+
+  subtotal    Int
+  discount    Int    @default(0)
+  deliveryFee Int    @default(0)
+  total       Int
+  promoCode   String?
+
+  paymentMethod PaymentMethod @default(CASH)
+  paymentStatus PaymentStatus @default(PENDING)
+  receiptFileId String? // karta o'tkazmasi cheki (Telegram file_id)
+
+  customerName String
+  phone        String
+  address      String?
+  lat          Float?
+  lng          Float?
+  comment      String?
+
+  status    OrderStatus @default(NEW)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  SHIPPING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD_TRANSFER
+  PAYME
+  CLICK
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
