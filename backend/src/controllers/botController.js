@@ -3,6 +3,7 @@ import bot, { safeSend } from '../core/bot.js';
 import UserModel from '../models/User.js';
 import OrderModel from '../models/Order.js';
 import SettingModel from '../models/Setting.js';
+import assistant from './assistantController.js';
 import { t, ORDER_STATUS_LABELS } from '../utils/i18n.js';
 import { formatMoney, formatDate } from '../utils/helpers.js';
 
@@ -160,6 +161,45 @@ export async function handleAdmin(msg) {
       },
     },
   );
+}
+
+/**
+ * Erkin matnli savolga AI sotuvchi javob beradi.
+ * AI o'chiq bo'lsa yoki javob topilmasa — jim qoladi (bot avvalgidek ishlaydi).
+ */
+export async function handleAiQuestion(msg) {
+  const text = (msg.text || '').trim();
+  if (text.length < 3) return;
+
+  const user = await UserModel.upsertFromTelegram(msg.from);
+  const lang = user.language || 'uz';
+
+  let result;
+  try {
+    await bot.sendChatAction(msg.chat.id, 'typing').catch(() => {});
+    result = await assistant.answer(text);
+  } catch (err) {
+    console.error('[ai] savolga javob berib bo\'lmadi:', err.message);
+    return safeSend(
+      msg.chat.id,
+      lang === 'ru'
+        ? 'Извините, сейчас не могу ответить. Откройте магазин кнопкой ниже.'
+        : "Kechirasiz, hozir javob bera olmadim. Pastdagi tugma bilan do'konni oching.",
+    );
+  }
+
+  if (!result) return; // AI o'chiq yoki katalog bo'sh
+
+  const rows = result.products.map((p) => [
+    {
+      text: `${p.nameUz} — ${formatMoney(p.price, result.currency)}`,
+      ...(isMiniAppReady ? { web_app: { url: config.miniAppUrl } } : {}),
+    },
+  ]);
+
+  return safeSend(msg.chat.id, result.reply, {
+    reply_markup: rows.length ? { inline_keyboard: rows } : undefined,
+  });
 }
 
 export async function handleLanguageMenu(msg) {

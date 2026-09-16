@@ -83,6 +83,10 @@ export const api = {
     json('POST')('/settings/password', { currentPassword, newPassword }),
 
   upload: (dataUrl) => json('POST')('/upload', { dataUrl }),
+
+  aiStatus: () => request('/ai/status'),
+  aiProduct: (imageUrl) => json('POST')('/ai/product', { imageUrl }),
+  aiTranslate: (body) => json('POST')('/ai/translate', body),
 };
 
 /**

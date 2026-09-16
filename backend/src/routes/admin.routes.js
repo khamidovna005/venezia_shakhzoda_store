@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { adminAuth } from '../middlewares/auth.middleware.js';
 import * as admin from '../controllers/adminController.js';
+import * as ai from '../controllers/aiController.js';
 
 const router = Router();
 
@@ -20,6 +21,11 @@ router.post('/settings/password', admin.changePassword);
 
 // Rasm yuklash (brauzer rasmni oldindan kichraytirib yuboradi)
 router.post('/upload', admin.uploadImage);
+
+// Sun'iy intellekt
+router.get('/ai/status', ai.status);
+router.post('/ai/product', ai.generateProduct);
+router.post('/ai/translate', ai.translate);
 
 // Buyurtmalar
 router.get('/orders', admin.listOrders);

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ImageUploader from '../components/ImageUploader.jsx';
+import { api } from '../lib/api.js';
 
 const EMPTY = {
   nameUz: '',
@@ -58,6 +59,68 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [aiBusy, setAiBusy] = useState('');
+
+  useEffect(() => {
+    api.aiStatus().then((r) => setAiEnabled(r.enabled)).catch(() => setAiEnabled(false));
+  }, []);
+
+  /** Birinchi rasmga qarab butun kartochkani to'ldiradi */
+  async function fillFromImage() {
+    const firstImage = form.images.split('\n').map((s) => s.trim()).filter(Boolean)[0];
+    if (!firstImage) return setError('Avval rasm yuklang — AI unga qarab yozadi');
+
+    setError('');
+    setAiBusy('product');
+    try {
+      const { product: p } = await api.aiProduct(firstImage);
+      setForm((f) => ({
+        ...f,
+        nameUz: p.nameUz,
+        nameRu: p.nameRu,
+        descUz: p.descUz,
+        descRu: p.descRu,
+        featuresUz: (p.featuresUz || []).join('\n'),
+        featuresRu: (p.featuresRu || []).join('\n'),
+        materialUz: p.materialUz,
+        materialRu: p.materialRu,
+        categoryId: p.categoryId ?? f.categoryId,
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAiBusy('');
+    }
+  }
+
+  /** O'zbekcha matnlardan ruschasini yozadi */
+  async function fillRussian() {
+    if (!form.nameUz.trim()) return setError("Avval o'zbekcha nomni yozing");
+
+    setError('');
+    setAiBusy('translate');
+    try {
+      const { translation } = await api.aiTranslate({
+        nameUz: form.nameUz,
+        descUz: form.descUz,
+        featuresUz: form.featuresUz.split('\n').filter(Boolean),
+        materialUz: form.materialUz,
+      });
+      setForm((f) => ({
+        ...f,
+        nameRu: translation.nameRu,
+        descRu: translation.descRu,
+        featuresRu: (translation.featuresRu || []).join('\n'),
+        materialRu: translation.materialRu,
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAiBusy('');
+    }
+  }
 
   const set = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -148,6 +211,37 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
                 onChange={(images) => setForm((f) => ({ ...f, images }))}
               />
             </div>
+
+            {aiEnabled && (
+              <div className="form-row full">
+                <div className="ai-bar">
+                  <div className="ai-bar-text">
+                    <b>✨ AI yordamchi</b>
+                    <span className="hint">
+                      Rasmga qarab nom, tavsif va xususiyatlarni o‘zi yozadi
+                    </span>
+                  </div>
+                  <div className="ai-bar-actions">
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={fillFromImage}
+                      disabled={Boolean(aiBusy)}
+                    >
+                      {aiBusy === 'product' ? 'Yozilmoqda…' : '✨ Rasmdan to‘ldirish'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline"
+                      onClick={fillRussian}
+                      disabled={Boolean(aiBusy)}
+                    >
+                      {aiBusy === 'translate' ? 'Tarjima…' : '🌐 Ruschasini yozish'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="form-row">
               <label>Tavsif (UZ)</label>

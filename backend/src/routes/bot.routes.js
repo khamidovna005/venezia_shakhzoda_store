@@ -25,6 +25,10 @@ export function registerBotHandlers() {
     if (matches(text, 'contactUs')) return run(botController.handleContactInfo);
     if (matches(text, 'help')) return run(botController.handleHelp);
     if (text === '🌐 Til / Язык') return run(botController.handleLanguageMenu);
+
+    // Tugmalarga tushmagan erkin matn — AI sotuvchiga beriladi.
+    // AI o'chiq bo'lsa handleAiQuestion hech narsa qilmaydi.
+    return run(botController.handleAiQuestion);
   });
 
   bot

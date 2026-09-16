@@ -24,6 +24,15 @@ const config = {
   jwtSecret: process.env.JWT_SECRET || 'dev_secret_change_me',
   allowInsecureAuth: process.env.ALLOW_INSECURE_AUTH === 'true',
 
+  // Sun'iy intellekt. Kalit bo'lmasa AI imkoniyatlari o'chadi, qolgani ishlayveradi.
+  ai: {
+    apiKey: (process.env.ANTHROPIC_API_KEY || '').trim(),
+    model: (process.env.AI_MODEL || 'claude-opus-4-8').trim(),
+    get enabled() {
+      return Boolean(this.apiKey);
+    },
+  },
+
   shopName: process.env.SHOP_NAME || 'Demo Boutique',
   currency: process.env.CURRENCY || "so'm",
 
