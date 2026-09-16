@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "cd miniapp && npm install",
+  "buildCommand": "cd miniapp && npm run build",
+  "outputDirectory": "miniapp/dist",
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://venezia-shakhzoda-store-1.onrender.com"
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
