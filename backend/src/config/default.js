@@ -8,7 +8,9 @@ const int = (value, fallback) => {
 const config = {
   port: int(process.env.PORT, 5000),
 
-  botToken: process.env.BOT_TOKEN || '',
+  // trim(): panelga qiymat ko'chirilganda oxiriga bo'sh joy yoki yangi qator
+  // qo'shilib qolishi mumkin — bu imzo tekshiruvini jimgina buzadi.
+  botToken: (process.env.BOT_TOKEN || '').trim(),
   databaseUrl: process.env.DATABASE_URL || '',
 
   admin: {

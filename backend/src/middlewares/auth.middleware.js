@@ -14,17 +14,38 @@ export function verifyInitData(initData, botToken) {
     if (!hash) return null;
 
     params.delete('hash');
-    params.delete('signature');
-
-    const dataCheckString = [...params.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
 
     const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
-    const computed = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
-    if (computed !== hash) return null;
+    const buildCheckString = (entries) =>
+      entries
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+
+    // Telegram hujjatida faqat `hash` chiqariladi deyilgan, lekin ba'zi
+    // mijoz versiyalari `signature` ni ham hisobga olmaydi. Ikkalasini
+    // ham sinaymiz — qaysi biri mos kelsa, imzo haqiqiy.
+    const all = [...params.entries()];
+    const candidates = [all];
+    if (params.has('signature')) {
+      candidates.push(all.filter(([key]) => key !== 'signature'));
+    }
+
+    const matched = candidates.some((entries) => {
+      const computed = crypto
+        .createHmac('sha256', secretKey)
+        .update(buildCheckString([...entries]))
+        .digest('hex');
+      // timingSafeEqual uzunliklar farq qilsa xato tashlaydi
+      return computed.length === hash.length
+        && crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hash));
+    });
+
+    if (!matched) {
+      console.warn('[auth] initData imzosi mos kelmadi. Kelgan maydonlar:', all.map(([k]) => k).join(','));
+      return null;
+    }
 
     // 24 soatdan eski initData qabul qilinmaydi
     const authDate = Number(params.get('auth_date') || 0);
