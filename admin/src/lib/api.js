@@ -1,5 +1,9 @@
 const TOKEN_KEY = 'zb_admin_token';
 
+// Bo'sh base => so'rovlar Vite proxy orqali backendga ketadi (vite.config.js).
+// Vercel'ga deploy qilinganda proxy yo'q, shuning uchun VITE_API_URL kerak.
+const BASE = import.meta.env.VITE_API_URL || '';
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY) || '';
 }
@@ -13,7 +17,7 @@ export function clearToken() {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(`/api/admin${path}`, {
+  const res = await fetch(`${BASE}/api/admin${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
