@@ -5,6 +5,8 @@
 .env
 .env.*
 !.env.example
+# Bu faqat ochiq backend manzilini saqlaydi — maxfiy narsa yo'q
+!.env.production
 
 # ==========================================================
 #  Paketlar
