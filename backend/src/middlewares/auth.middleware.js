@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import config from '../config/default.js';
 import UserModel from '../models/User.js';
+import SettingModel from '../models/Setting.js';
 
 /**
  * Telegram WebApp initData imzosini tekshiradi.
@@ -104,8 +105,11 @@ function safeEqual(a, b) {
 }
 
 /** `.env` dagi ADMIN_LOGIN / ADMIN_PASSWORD bilan tekshiradi */
-export function checkAdminCredentials(login, password) {
-  return safeEqual(login ?? '', config.admin.login) && safeEqual(password ?? '', config.admin.password);
+export async function checkAdminCredentials(login, password) {
+  if (!safeEqual(login ?? '', config.admin.login)) return false;
+  // Parol admin paneldan o'zgartirilgan bo'lsa bazadagi hash bilan,
+  // aks holda `.env` dagi qiymat bilan solishtiriladi.
+  return SettingModel.verifyAdminPassword(password ?? '');
 }
 
 /** Muvaffaqiyatli kirishdan keyin 7 kunlik token beriladi */

@@ -76,6 +76,23 @@ export const api = {
 
   users: () => request('/users'),
   messageUser: (telegramId, text) => json('POST')('/users/message', { telegramId, text }),
+
+  settings: () => request('/settings'),
+  saveSettings: (body) => json('PUT')('/settings', body),
+  changePassword: (currentPassword, newPassword) =>
+    json('POST')('/settings/password', { currentPassword, newPassword }),
+
+  upload: (dataUrl) => json('POST')('/upload', { dataUrl }),
 };
+
+/**
+ * Yuklangan rasm yo'li `/api/images/<id>` ko'rinishida saqlanadi.
+ * Brauzer uni admin panel domeniga nisbatan izlamasligi uchun
+ * backend manzili qo'shiladi. Tashqi URL bo'lsa — o'zgarishsiz qoladi.
+ */
+export function imageUrl(src) {
+  if (!src) return '';
+  return src.startsWith('/api/') ? `${BASE}${src}` : src;
+}
 
 export default api;

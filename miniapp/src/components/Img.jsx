@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { imageUrl } from '../lib/api.js';
 
 const FALLBACK =
   'data:image/svg+xml;utf8,' +
@@ -14,7 +15,7 @@ export default function Img({ src, alt = '', ...rest }) {
   const [failed, setFailed] = useState(false);
   return (
     <img
-      src={failed || !src ? FALLBACK : src}
+      src={failed || !src ? FALLBACK : imageUrl(src)}
       alt={alt}
       loading="lazy"
       onError={() => setFailed(true)}

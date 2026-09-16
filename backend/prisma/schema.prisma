@@ -158,8 +158,8 @@ model Order {
   items Json
 
   subtotal    Int
-  discount    Int    @default(0)
-  deliveryFee Int    @default(0)
+  discount    Int     @default(0)
+  deliveryFee Int     @default(0)
   total       Int
   promoCode   String?
 
@@ -204,4 +204,28 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+}
+
+// ============================================================
+//  YUKLANGAN RASMLAR
+//  Render bepul tarifida disk vaqtinchalik — qayta ishga tushganda
+//  fayllar yo'qoladi. Shuning uchun rasmlar bazada saqlanadi.
+// ============================================================
+model Image {
+  id        String   @id @default(cuid())
+  mimeType  String
+  data      Bytes
+  size      Int
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+//  DO'KON SOZLAMALARI
+//  Kalit-qiymat juftligi. Bazada bo'lmasa .env dagi qiymat ishlatiladi,
+//  shuning uchun do'kon egasi sozlamalarni admin paneldan o'zgartira oladi.
+// ============================================================
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
 }

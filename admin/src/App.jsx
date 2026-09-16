@@ -9,6 +9,7 @@ import Products from './pages/Products.jsx';
 import Categories from './pages/Categories.jsx';
 import Promos from './pages/Promos.jsx';
 import Customers from './pages/Customers.jsx';
+import Settings from './pages/Settings.jsx';
 
 const NAV = [
   { key: 'dashboard', icon: '📊', label: 'Boshqaruv' },
@@ -17,6 +18,7 @@ const NAV = [
   { key: 'categories', icon: '🏷', label: 'Kategoriyalar' },
   { key: 'promos', icon: '🎟', label: 'Promokodlar' },
   { key: 'customers', icon: '👥', label: 'Mijozlar' },
+  { key: 'settings', icon: '⚙️', label: 'Sozlamalar' },
 ];
 
 export default function App() {
@@ -136,6 +138,7 @@ export default function App() {
         {page === 'categories' && <Categories toast={toast} />}
         {page === 'promos' && <Promos currency={shop.currency} toast={toast} />}
         {page === 'customers' && <Customers toast={toast} />}
+        {page === 'settings' && <Settings />}
       </main>
 
       {toastMsg && <div className="toast">{toastMsg}</div>}

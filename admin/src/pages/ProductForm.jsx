@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ImageUploader from '../components/ImageUploader.jsx';
 
 const EMPTY = {
   nameUz: '',
@@ -141,13 +142,10 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
             </div>
 
             <div className="form-row full">
-              <label>
-                Rasmlar <span className="hint">— har bir URL yangi qatordan</span>
-              </label>
-              <textarea
+              <label>Rasmlar</label>
+              <ImageUploader
                 value={form.images}
-                onChange={set('images')}
-                placeholder="https://images.unsplash.com/photo-...&#10;https://..."
+                onChange={(images) => setForm((f) => ({ ...f, images }))}
               />
             </div>
 

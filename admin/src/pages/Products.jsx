@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../lib/api.js';
+import api, { imageUrl } from '../lib/api.js';
 import { money } from '../lib/format.js';
 import ProductForm from './ProductForm.jsx';
 
@@ -104,7 +104,7 @@ export default function Products({ currency, toast }) {
                   return (
                     <tr key={p.id}>
                       <td>
-                        <img className="thumb" src={p.images?.[0]} alt="" />
+                        <img className="thumb" src={imageUrl(p.images?.[0])} alt="" />
                       </td>
 
                       <td>

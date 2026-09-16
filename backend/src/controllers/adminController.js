@@ -6,6 +6,8 @@ import CategoryModel from '../models/Category.js';
 import PromoModel from '../models/Promo.js';
 import StoryModel from '../models/Story.js';
 import UserModel from '../models/User.js';
+import SettingModel from '../models/Setting.js';
+import ImageModel from '../models/Image.js';
 import { safeSend } from '../core/bot.js';
 import { t, ORDER_STATUS_LABELS } from '../utils/i18n.js';
 import { toPlain, toInt } from '../utils/helpers.js';
@@ -32,7 +34,7 @@ export async function login(req, res) {
 
   const { login: userLogin, password } = req.body;
 
-  if (!checkAdminCredentials(userLogin, password)) {
+  if (!(await checkAdminCredentials(userLogin, password))) {
     // Parol tanlashni sekinlashtiramiz
     await new Promise((resolve) => setTimeout(resolve, 400));
     const count = record && Date.now() - record.at < BLOCK_MS ? record.count + 1 : 1;
@@ -45,8 +47,8 @@ export async function login(req, res) {
   res.json({
     ok: true,
     token: issueAdminToken(userLogin),
-    shopName: config.shopName,
-    currency: config.currency,
+    shopName: await SettingModel.get('shopName'),
+    currency: await SettingModel.get('currency'),
   });
 }
 
@@ -54,13 +56,59 @@ export async function login(req, res) {
 /*  SESSIYA                                                            */
 /* ------------------------------------------------------------------ */
 
-export function me(req, res) {
+export async function me(req, res) {
   res.json({
     ok: true,
     admin: req.admin,
-    shopName: config.shopName,
-    currency: config.currency,
+    shopName: await SettingModel.get('shopName'),
+    currency: await SettingModel.get('currency'),
   });
+}
+
+/* ------------------------------------------------------------------ */
+/*  SOZLAMALAR                                                         */
+/* ------------------------------------------------------------------ */
+
+export async function getSettings(_req, res) {
+  res.json({
+    ok: true,
+    settings: await SettingModel.getAll(),
+    passwordChanged: await SettingModel.hasCustomPassword(),
+  });
+}
+
+export async function updateSettings(req, res) {
+  const saved = await SettingModel.setMany(req.body || {});
+  res.json({ ok: true, saved, settings: await SettingModel.getAll() });
+}
+
+export async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body || {};
+
+  if (!(await SettingModel.verifyAdminPassword(currentPassword ?? ''))) {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    return res.status(401).json({ ok: false, error: 'Joriy parol noto‘g‘ri' });
+  }
+
+  if (!newPassword || String(newPassword).length < 8) {
+    return res.status(400).json({ ok: false, error: 'Yangi parol kamida 8 ta belgi bo‘lsin' });
+  }
+
+  await SettingModel.setAdminPassword(String(newPassword));
+  res.json({ ok: true });
+}
+
+/* ------------------------------------------------------------------ */
+/*  RASM YUKLASH                                                       */
+/* ------------------------------------------------------------------ */
+
+export async function uploadImage(req, res) {
+  try {
+    const result = await ImageModel.saveDataUrl(req.body?.dataUrl);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
 }
 
 /* ------------------------------------------------------------------ */

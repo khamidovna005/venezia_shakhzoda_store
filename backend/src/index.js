@@ -8,12 +8,14 @@ import { startBot, stopBot } from './core/bot.js';
 import registerBotHandlers from './routes/bot.routes.js';
 import clientRoutes from './routes/client.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import ImageModel from './models/Image.js';
 import { errorHandler } from './middlewares/auth.middleware.js';
 
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '2mb' }));
+// Rasm base64 ko'rinishida keladi — brauzer kichraytirgandan keyin ham joy kerak
+app.use(express.json({ limit: '8mb' }));
 app.use(morgan('dev'));
 
 app.get('/', (_req, res) => {
@@ -26,6 +28,21 @@ app.get('/', (_req, res) => {
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
+});
+
+// Yuklangan rasmlar — ochiq, chunki ularni mijozlar ham ko'radi
+app.get('/api/images/:id', async (req, res, next) => {
+  try {
+    const image = await ImageModel.findById(req.params.id);
+    if (!image) return res.status(404).json({ ok: false, error: 'Rasm topilmadi' });
+
+    // Rasm hech qachon o'zgarmaydi (yangisi yangi id oladi) — uzoq keshlash mumkin
+    res.set('Content-Type', image.mimeType);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(image.data);
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.use('/api/client', clientRoutes);

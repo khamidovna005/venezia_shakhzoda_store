@@ -6,6 +6,7 @@ import CategoryModel from '../models/Category.js';
 import StoryModel from '../models/Story.js';
 import PromoModel from '../models/Promo.js';
 import OrderModel from '../models/Order.js';
+import SettingModel from '../models/Setting.js';
 import { safeSend, bot } from '../core/bot.js';
 import { t } from '../utils/i18n.js';
 import { formatMoney, toPlain } from '../utils/helpers.js';
@@ -16,7 +17,7 @@ import { formatMoney, toPlain } from '../utils/helpers.js';
 
 export async function init(req, res, next) {
   try {
-    const [categories, stories, upsell] = await Promise.all([
+    const [categories, stories, upsell, shop] = await Promise.all([
       CategoryModel.listActive(),
       StoryModel.listActive(),
       prisma.product.findFirst({
@@ -24,6 +25,7 @@ export async function init(req, res, next) {
         orderBy: { price: 'asc' },
         include: { variants: true },
       }),
+      SettingModel.getShopInfo(),
     ]);
 
     res.json({
@@ -33,19 +35,19 @@ export async function init(req, res, next) {
       stories,
       upsell,
       settings: {
-        shopName: config.shopName,
-        currency: config.currency,
-        deliveryFee: config.delivery.fee,
-        freeDeliveryFrom: config.delivery.freeFrom,
+        shopName: shop.shopName,
+        currency: shop.currency,
+        deliveryFee: shop.deliveryFee,
+        freeDeliveryFrom: shop.freeDeliveryFrom,
         payments: {
           cash: true,
-          cardTransfer: Boolean(config.payment.cardNumber),
+          cardTransfer: Boolean(shop.cardNumber),
           payme: config.payment.payme.enabled,
           click: config.payment.click.enabled,
         },
         card: {
-          number: config.payment.cardNumber,
-          holder: config.payment.cardHolder,
+          number: shop.cardNumber,
+          holder: shop.cardHolder,
         },
       },
     });
@@ -271,7 +273,8 @@ export async function createOrder(req, res, next) {
     }
 
     // --- Yetkazib berish ---
-    const deliveryFee = subtotal >= config.delivery.freeFrom ? 0 : config.delivery.fee;
+    const shop = await SettingModel.getShopInfo();
+    const deliveryFee = subtotal >= shop.freeDeliveryFrom ? 0 : shop.deliveryFee;
     const total = Math.max(0, subtotal - discount) + deliveryFee;
 
     // --- Saqlash ---
@@ -305,16 +308,16 @@ export async function createOrder(req, res, next) {
       reply_markup: { remove_keyboard: false },
     });
 
-    if (method === 'CARD_TRANSFER' && config.payment.cardNumber) {
+    if (method === 'CARD_TRANSFER' && shop.cardNumber) {
       await safeSend(
         req.user.telegramId,
         t(
           lang,
           'askReceipt',
           order.orderNo,
-          config.payment.cardNumber,
-          config.payment.cardHolder,
-          formatMoney(order.total, config.currency),
+          shop.cardNumber,
+          shop.cardHolder,
+          formatMoney(order.total, shop.currency),
         ),
       );
     }

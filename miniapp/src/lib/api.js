@@ -47,4 +47,14 @@ export const api = {
   reorder: (id) => request(`/orders/${id}/reorder`, { method: 'POST' }),
 };
 
+/**
+ * Admin panelda yuklangan rasm `/api/images/<id>` ko'rinishida saqlanadi.
+ * Brauzer uni Vercel domeniga nisbatan izlab 404 olmasligi uchun
+ * backend manzili qo'shiladi. Tashqi URL bo'lsa o'zgarishsiz qoladi.
+ */
+export function imageUrl(src) {
+  if (!src) return '';
+  return src.startsWith('/api/') ? `${BASE}${src}` : src;
+}
+
 export default api;

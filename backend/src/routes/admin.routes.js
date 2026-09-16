@@ -13,6 +13,14 @@ router.use(adminAuth);
 router.get('/me', admin.me);
 router.get('/stats', admin.stats);
 
+// Sozlamalar
+router.get('/settings', admin.getSettings);
+router.put('/settings', admin.updateSettings);
+router.post('/settings/password', admin.changePassword);
+
+// Rasm yuklash (brauzer rasmni oldindan kichraytirib yuboradi)
+router.post('/upload', admin.uploadImage);
+
 // Buyurtmalar
 router.get('/orders', admin.listOrders);
 router.get('/orders/:id', admin.getOrder);

@@ -2,6 +2,7 @@ import config from '../config/default.js';
 import bot, { safeSend } from '../core/bot.js';
 import UserModel from '../models/User.js';
 import OrderModel from '../models/Order.js';
+import SettingModel from '../models/Setting.js';
 import { t, ORDER_STATUS_LABELS } from '../utils/i18n.js';
 import { formatMoney, formatDate } from '../utils/helpers.js';
 
@@ -41,7 +42,7 @@ export async function handleStart(msg) {
   const user = await UserModel.upsertFromTelegram(msg.from);
   const lang = user.language || 'uz';
 
-  let text = t(lang, 'welcome', user.firstName, config.shopName);
+  let text = t(lang, 'welcome', user.firstName, await SettingModel.get('shopName'));
 
   if (!isMiniAppReady) {
     text +=
@@ -113,7 +114,7 @@ export async function handleMyOrders(msg) {
 export async function handleContactInfo(msg) {
   const user = await UserModel.upsertFromTelegram(msg.from);
   const lang = user.language || 'uz';
-  await safeSend(msg.chat.id, t(lang, 'contactInfo', config.shopName));
+  await safeSend(msg.chat.id, t(lang, 'contactInfo', await SettingModel.get('shopName')));
 }
 
 export async function handleHelp(msg) {
