@@ -11,6 +11,9 @@ import { formatMoney, formatDate } from '../utils/helpers.js';
  */
 export const isMiniAppReady = config.miniAppUrl.startsWith('https://');
 
+/** Admin panel ham web_app tugmasi orqali ochiladi — u ham https bo'lishi shart. */
+export const isAdminPanelReady = config.adminPanelUrl.startsWith('https://');
+
 /** Asosiy klaviatura (WebApp tugmasi bilan) */
 export function mainKeyboard(lang, hasPhone) {
   const rows = [];
@@ -117,6 +120,45 @@ export async function handleHelp(msg) {
   const user = await UserModel.upsertFromTelegram(msg.from);
   const lang = user.language || 'uz';
   await safeSend(msg.chat.id, t(lang, 'helpText'));
+}
+
+/**
+ * /admin — Admin panelni Telegram ichida ochadi.
+ *
+ * Buyruq ataylab `setMyCommands` ro'yxatiga qo'shilmagan: mijozlar uni
+ * menyuda ko'rmaydi. Himoyani parol ta'minlaydi — panel login/parol so'raydi.
+ */
+export async function handleAdmin(msg) {
+  const user = await UserModel.upsertFromTelegram(msg.from);
+  const lang = user.language || 'uz';
+
+  if (!isAdminPanelReady) {
+    return safeSend(
+      msg.chat.id,
+      lang === 'ru'
+        ? '⚠️ Админ-панель ещё не подключена.\nУкажите её https-адрес в переменной ADMIN_PANEL_URL.'
+        : "⚠️ Admin panel hali ulanmagan.\nUning https manzilini ADMIN_PANEL_URL o'zgaruvchisiga yozing.",
+    );
+  }
+
+  return safeSend(
+    msg.chat.id,
+    lang === 'ru'
+      ? '🔐 Панель управления\n\nНажмите кнопку и войдите с логином и паролем.'
+      : "🔐 Boshqaruv paneli\n\nTugmani bosing va login/parol bilan kiring.",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: lang === 'ru' ? '🔐 Открыть панель' : '🔐 Panelni ochish',
+              web_app: { url: config.adminPanelUrl },
+            },
+          ],
+        ],
+      },
+    },
+  );
 }
 
 export async function handleLanguageMenu(msg) {

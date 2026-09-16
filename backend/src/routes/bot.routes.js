@@ -9,6 +9,7 @@ export function registerBotHandlers() {
   bot.onText(/^\/start/, (msg) => botController.handleStart(msg).catch(console.error));
   bot.onText(/^\/help/, (msg) => botController.handleHelp(msg).catch(console.error));
   bot.onText(/^\/lang/, (msg) => botController.handleLanguageMenu(msg).catch(console.error));
+  bot.onText(/^\/admin/, (msg) => botController.handleAdmin(msg).catch(console.error));
 
   bot.on('contact', (msg) => botController.handleContact(msg).catch(console.error));
   bot.on('photo', (msg) => botController.handlePhoto(msg).catch(console.error));
