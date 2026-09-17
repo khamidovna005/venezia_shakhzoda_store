@@ -25,13 +25,22 @@ function getClient() {
  * Structured outputs tufayli javob har doim to'g'ri JSON bo'ladi —
  * qo'lda tozalash yoki qavs qidirish kerak emas.
  */
-export async function askJson({ system, content, schema, maxTokens = 2000 }) {
+export async function askJson({
+  system,
+  content,
+  schema,
+  maxTokens = 2000,
+  // Tarjima kabi mexanik ishlarga o'ylash kerak emas — u faqat pul va
+  // vaqt yeydi. Rasmga qarab matn yozish kabi ishlarda esa foydali.
+  thinking = true,
+  effort = 'medium',
+}) {
   const response = await getClient().messages.create({
     model: config.ai.model,
     max_tokens: maxTokens,
-    thinking: { type: 'adaptive' },
+    thinking: thinking ? { type: 'adaptive' } : { type: 'disabled' },
     output_config: {
-      effort: 'medium',
+      effort,
       format: { type: 'json_schema', schema },
     },
     system,

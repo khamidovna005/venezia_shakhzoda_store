@@ -120,7 +120,11 @@ export async function translate(req, res, next) {
       system:
         'Sen kiyim do\'koni matnlarini o\'zbekchadan ruschaga tarjima qilasan. ' +
         'Tarjima tabiiy bo\'lsin, so\'zma-so\'z emas. Bo\'sh maydonni bo\'sh qoldir.',
-      maxTokens: 2000,
+      maxTokens: 1000,
+      // Tarjima — mexanik ish. O'ylash bosqichi natijani yaxshilamaydi,
+      // lekin chiqish tokenlarini bir necha barobar oshiradi.
+      thinking: false,
+      effort: 'low',
       content: JSON.stringify({ nameUz, descUz, featuresUz, materialUz }, null, 2),
       schema: TRANSLATE_SCHEMA,
     });

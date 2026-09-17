@@ -31,6 +31,12 @@ const config = {
     get enabled() {
       return Boolean(this.apiKey);
     },
+    // Botdagi AI sotuvchi alohida yoqiladi. Admin panel imkoniyatlaridan
+    // farqli o'laroq, uning xarajati mijozlar sonига bog'liq — ya'ni
+    // oldindan bilib bo'lmaydi. Shuning uchun standart holatda o'chiq.
+    get assistantEnabled() {
+      return this.enabled && process.env.AI_ASSISTANT === 'true';
+    },
   },
 
   shopName: process.env.SHOP_NAME || 'Demo Boutique',

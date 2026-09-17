@@ -1,4 +1,5 @@
 import ai from '../core/ai.js';
+import config from '../config/default.js';
 import ProductModel from '../models/Product.js';
 import SettingModel from '../models/Setting.js';
 import { formatMoney } from '../utils/helpers.js';
@@ -59,7 +60,7 @@ function buildCatalog(products, currency) {
  * Qaytadi: `{ reply, products }` yoki AI yoqilmagan bo'lsa `null`.
  */
 export async function answer(question) {
-  if (!ai.isEnabled()) return null;
+  if (!config.ai.assistantEnabled) return null;
 
   const [products, currency] = await Promise.all([
     ProductModel.listForClient({}),
