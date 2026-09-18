@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import Img from '../components/Img.jsx';
 import { pick, money } from '../lib/i18n.js';
-import { haptic } from '../lib/telegram.js';
+import { haptic, requestLocation, openLocationSettings, openExternal } from '../lib/telegram.js';
 import api from '../lib/api.js';
 
 export default function Cart({
@@ -20,6 +20,7 @@ export default function Cart({
   const [address, setAddress] = useState('');
   const [comment, setComment] = useState('');
   const [coords, setCoords] = useState(null);
+  const [locating, setLocating] = useState(false);
   const [payment, setPayment] = useState('CASH');
 
   const [promoInput, setPromoInput] = useState('');
@@ -82,20 +83,25 @@ export default function Cart({
   };
 
   /* ---------------- Lokatsiya ---------------- */
-  const getLocation = () => {
+  const getLocation = async () => {
     haptic('light');
-    if (!navigator.geolocation) {
-      toast('Brauzer lokatsiyani qo‘llab-quvvatlamaydi');
-      return;
+    setLocating(true);
+    try {
+      const point = await requestLocation();
+      setCoords(point);
+      haptic('success');
+    } catch (err) {
+      haptic('warning');
+      if (err.message === 'UNSUPPORTED') {
+        toast(t('locationUnsupported'));
+      } else {
+        // Rad etilgan bo'lsa — Telegram sozlamalaridan yoqish mumkin
+        toast(t('locationDenied'));
+        openLocationSettings();
+      }
+    } finally {
+      setLocating(false);
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        haptic('success');
-      },
-      () => toast('Lokatsiyani olishning iloji bo‘lmadi'),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   };
 
   /* ---------------- Buyurtma ---------------- */
@@ -115,7 +121,7 @@ export default function Cart({
 
     setSending(true);
     try {
-      const { order } = await api.createOrder({
+      const { order, payUrl } = await api.createOrder({
         items: cart.items.map((i) => ({
           productId: i.productId,
           variantId: i.variantId,
@@ -133,6 +139,12 @@ export default function Cart({
 
       haptic('success');
       cart.clear();
+
+      // Payme/Click tanlangan bo'lsa — to'lov sahifasini ochamiz.
+      // Havola botga ham yuborilgan, shuning uchun bu yerda ochilmasa ham
+      // mijoz keyin bosib to'lay oladi.
+      if (payUrl) openExternal(payUrl);
+
       onSuccess(order);
     } catch (err) {
       setError(err.message);
@@ -281,9 +293,18 @@ export default function Cart({
           />
         </div>
         <div className="field">
-          <button className={`btn ${coords ? 'btn-ghost' : 'btn-outline'}`} onClick={getLocation}>
-            {coords ? t('locationSaved') : t('sendLocation')}
+          <button
+            className={`btn ${coords ? 'btn-ghost' : 'btn-outline'}`}
+            onClick={getLocation}
+            disabled={locating}
+          >
+            {locating ? t('locationSearching') : coords ? t('locationSaved') : t('sendLocation')}
           </button>
+          {coords && (
+            <p className="hint" style={{ marginTop: 6 }}>
+              {t('locationHint')}
+            </p>
+          )}
         </div>
         <div className="field">
           <textarea

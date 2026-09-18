@@ -26,6 +26,13 @@ export const DEFAULTS = {
   cardHolder: () => config.payment.cardHolder,
   contactPhone: () => '',
   contactAddress: () => '',
+
+  // Payme va Click rekvizitlari. Bular maxfiy emas — to'lov havolasi
+  // ichida ochiq ketadi. Maxfiy kalitlar (Payme key, Click secret) faqat
+  // avtomatik tasdiqlash uchun kerak, u hali ulanmagan.
+  paymeMerchantId: () => config.payment.payme.merchantId,
+  clickServiceId: () => config.payment.click.serviceId,
+  clickMerchantId: () => config.payment.click.merchantId,
 };
 
 /** Parol bazada ochiq saqlanmaydi — scrypt hash sifatida yoziladi */
@@ -75,6 +82,9 @@ export async function getShopInfo() {
     cardHolder: await get('cardHolder'),
     contactPhone: await get('contactPhone'),
     contactAddress: await get('contactAddress'),
+    paymeMerchantId: await get('paymeMerchantId'),
+    clickServiceId: await get('clickServiceId'),
+    clickMerchantId: await get('clickMerchantId'),
   };
 }
 

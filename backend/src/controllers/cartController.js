@@ -10,6 +10,7 @@ import SettingModel from '../models/Setting.js';
 import { safeSend, bot } from '../core/bot.js';
 import { t } from '../utils/i18n.js';
 import { formatMoney, toPlain } from '../utils/helpers.js';
+import { paymentUrlFor } from '../utils/payment.js';
 
 /* ------------------------------------------------------------------ */
 /*  BOSHLANG'ICH MA'LUMOTLAR                                           */
@@ -44,8 +45,8 @@ export async function init(req, res, next) {
         payments: {
           cash: true,
           cardTransfer: Boolean(shop.cardNumber),
-          payme: config.payment.payme.enabled,
-          click: config.payment.click.enabled,
+          payme: Boolean(shop.paymeMerchantId),
+          click: Boolean(shop.clickServiceId && shop.clickMerchantId),
         },
         card: {
           number: shop.cardNumber,
@@ -205,10 +206,13 @@ export async function createOrder(req, res, next) {
 
     const allowedMethods = ['CASH', 'CARD_TRANSFER', 'PAYME', 'CLICK'];
     const method = allowedMethods.includes(paymentMethod) ? paymentMethod : 'CASH';
-    if (method === 'PAYME' && !config.payment.payme.enabled) {
+
+    // Rekvizitlar sozlamalarda bo'lmasa, to'lov havolasini yasab bo'lmaydi
+    const shopNow = await SettingModel.getShopInfo();
+    if (method === 'PAYME' && !shopNow.paymeMerchantId) {
       return res.status(400).json({ ok: false, error: 'Payme hozircha ulanmagan' });
     }
-    if (method === 'CLICK' && !config.payment.click.enabled) {
+    if (method === 'CLICK' && !(shopNow.clickServiceId && shopNow.clickMerchantId)) {
       return res.status(400).json({ ok: false, error: 'Click hozircha ulanmagan' });
     }
 
@@ -275,7 +279,7 @@ export async function createOrder(req, res, next) {
     }
 
     // --- Yetkazib berish ---
-    const shop = await SettingModel.getShopInfo();
+    const shop = shopNow;
     const deliveryFee = subtotal >= shop.freeDeliveryFrom ? 0 : shop.deliveryFee;
     const total = Math.max(0, subtotal - discount) + deliveryFee;
 
@@ -324,7 +328,23 @@ export async function createOrder(req, res, next) {
       );
     }
 
-    res.json({ ok: true, order: toPlain(order) });
+    // --- Payme / Click: to'lov havolasi ---
+    const payUrl = paymentUrlFor({ method, shop, order, lang });
+
+    if (payUrl) {
+      // Botga ham yuboramiz: mijoz ilovani yopib qo'ysa ham havola qoladi
+      await safeSend(
+        req.user.telegramId,
+        t(lang, 'payLinkText', order.orderNo, formatMoney(order.total, shop.currency)),
+        {
+          reply_markup: {
+            inline_keyboard: [[{ text: t(lang, 'payNow'), url: payUrl }]],
+          },
+        },
+      );
+    }
+
+    res.json({ ok: true, order: toPlain(order), payUrl });
   } catch (err) {
     next(err);
   }

@@ -19,6 +19,9 @@ const dict = {
       `🔔 <b>${orderNo}</b> raqamli buyurtmangiz holati o'zgardi:\n\n${status}`,
     askReceipt: (orderNo, card, holder, total) =>
       `💳 <b>To'lov uchun ma'lumot</b>\n\nBuyurtma: <code>${orderNo}</code>\nSumma: <b>${total}</b>\n\nKarta: <code>${card}</code>\nEgasi: <b>${holder}</b>\n\nPulni o'tkazgach, chek (skrinshot) rasmini shu yerga yuboring 📸`,
+    payLinkText: (orderNo, total) =>
+      `💳 <b>To'lovga o'tish</b>\n\nBuyurtma: <code>${orderNo}</code>\nSumma: <b>${total}</b>\n\nPastdagi tugmani bosing. To'lovdan keyin buyurtmangiz tasdiqlanadi.`,
+    payNow: '💳 To‘lovni amalga oshirish',
     receiptSaved:
       '✅ Chek qabul qilindi. Menejerimiz to‘lovni tekshirib, buyurtmani tasdiqlaydi.',
     receiptNoOrder:
@@ -49,6 +52,9 @@ const dict = {
       `🔔 Статус заказа <b>${orderNo}</b> изменён:\n\n${status}`,
     askReceipt: (orderNo, card, holder, total) =>
       `💳 <b>Информация для оплаты</b>\n\nЗаказ: <code>${orderNo}</code>\nСумма: <b>${total}</b>\n\nКарта: <code>${card}</code>\nВладелец: <b>${holder}</b>\n\nПосле перевода отправьте сюда скриншот чека 📸`,
+    payLinkText: (orderNo, total) =>
+      `💳 <b>Перейти к оплате</b>\n\nЗаказ: <code>${orderNo}</code>\nСумма: <b>${total}</b>\n\nНажмите кнопку ниже. После оплаты заказ будет подтверждён.`,
+    payNow: '💳 Оплатить',
     receiptSaved: '✅ Чек принят. Менеджер проверит оплату и подтвердит заказ.',
     receiptNoOrder: 'У вас нет заказов, ожидающих оплаты.',
     contactInfo: (shop) =>

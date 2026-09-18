@@ -12,6 +12,12 @@ const FIELDS = [
   { key: 'contactAddress', label: 'Manzil', hint: "Do'kon manzili" },
 ];
 
+const PAY_FIELDS = [
+  { key: 'paymeMerchantId', label: 'Payme merchant ID', hint: 'Payme kabinetidan olinadi' },
+  { key: 'clickServiceId', label: 'Click service ID', hint: 'Click kabinetidan olinadi' },
+  { key: 'clickMerchantId', label: 'Click merchant ID', hint: 'Click kabinetidan olinadi' },
+];
+
 export default function Settings() {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -101,6 +107,27 @@ export default function Settings() {
             ))}
           </div>
         </div>
+        <div className="panel-head" style={{ borderTop: '1px solid var(--line)' }}>
+          💳 Payme va Click
+        </div>
+        <div className="modal-body">
+          <div className="alert info" style={{ marginBottom: 14 }}>
+            Rekvizitlarni kiritsangiz, mijoz savatchada Payme yoki Click’ni tanlab
+            to‘lov sahifasiga o‘tadi. <b>To‘lov o‘tgani avtomatik tekshirilmaydi</b> —
+            pulni Payme/Click ilovangizda ko‘rib, buyurtmani “To‘landi” deb belgilaysiz.
+          </div>
+          <div className="form-grid">
+            {PAY_FIELDS.map((f) => (
+              <div className="form-row" key={f.key}>
+                <label>
+                  {f.label} <span className="hint">— {f.hint}</span>
+                </label>
+                <input type="text" value={form[f.key] ?? ''} onChange={set(f.key)} />
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="modal-foot">
           <button className="btn" disabled={saving}>
             {saving ? 'Saqlanmoqda…' : 'Saqlash'}
