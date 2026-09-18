@@ -359,6 +359,7 @@ export async function createPromo(req, res, next) {
       minTotal: toInt(req.body.minTotal, 0),
       usageLimit: toInt(req.body.usageLimit, 0),
       isActive: req.body.isActive !== false,
+      isPublic: req.body.isPublic === true,
       expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
     });
     res.status(201).json({ ok: true, promo });
@@ -376,6 +377,7 @@ export async function updatePromo(req, res, next) {
       minTotal: toInt(req.body.minTotal, 0),
       usageLimit: toInt(req.body.usageLimit, 0),
       isActive: req.body.isActive !== false,
+      isPublic: req.body.isPublic === true,
       expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
     });
     res.json({ ok: true, promo });
