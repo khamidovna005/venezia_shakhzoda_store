@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 
 import config from './config/default.js';
-import { connectDatabase, disconnectDatabase } from './database/connection.js';
+import { connectDatabase, disconnectDatabase, dbState } from './database/connection.js';
 import { startBot, stopBot } from './core/bot.js';
 import registerBotHandlers from './routes/bot.routes.js';
 import clientRoutes from './routes/client.routes.js';
@@ -26,8 +26,14 @@ app.get('/', (_req, res) => {
   });
 });
 
+// Baza uzilgan bo'lsa ham javob beradi — nosozlikni shu yerdan ko'rasiz
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, time: new Date().toISOString() });
+  res.json({
+    ok: true,
+    time: new Date().toISOString(),
+    db: dbState.connected ? 'ulangan' : 'ulanmagan',
+    dbError: dbState.lastError,
+  });
 });
 
 // Yuklangan rasmlar — ochiq, chunki ularni mijozlar ham ko'radi
@@ -51,10 +57,13 @@ app.use('/api/admin', adminRoutes);
 app.use((_req, res) => res.status(404).json({ ok: false, error: 'Topilmadi' }));
 app.use(errorHandler);
 
-async function bootstrap() {
-  await connectDatabase();
-
-  // API darhol ishga tushadi — botning Telegram bilan ulanishini kutib turmaydi
+function bootstrap() {
+  // 1) Portni BIRINCHI ochamiz.
+  //
+  // Avval bazaga ulanib, keyin listen qilinardi — baza sekin bo'lsa port
+  // umuman ochilmasdi va Render "javob bermayapti" deb kutib qolardi.
+  // Endi server bazadan mustaqil ko'tariladi: /api/health ishlaydi,
+  // sababini ko'rsatadi.
   app.listen(config.port, () => {
     console.log('');
     console.log('══════════════════════════════════════════════');
@@ -62,11 +71,17 @@ async function bootstrap() {
     console.log(`🚀 Server:      http://localhost:${config.port}`);
     console.log(`📱 Mini App:    ${config.miniAppUrl}`);
     console.log(`🔐 Admin Panel: ${config.adminPanelUrl}`);
-    console.log(`👑 Admin login: ${config.admin.login}`);
     console.log('══════════════════════════════════════════════');
     console.log('');
   });
 
+  // 2) Baza fonda ulanadi. Ulanmasa ham dastur yiqilmaydi —
+  //    Render cheksiz qayta ishga tushirmasligi uchun.
+  connectDatabase().then((ok) => {
+    if (!ok) console.error('❌ Baza ulanmadi. /api/health sababini ko\'rsatadi.');
+  });
+
+  // 3) Bot ham fonda
   registerBotHandlers();
   startBot().catch((err) => {
     console.error('⚠️  Bot ishga tushmadi (API baribir ishlayapti):', err?.message || err);
@@ -83,7 +98,9 @@ async function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-bootstrap().catch((err) => {
+try {
+  bootstrap();
+} catch (err) {
   console.error('❌ Dastur ishga tushmadi:', err);
   process.exit(1);
-});
+}
