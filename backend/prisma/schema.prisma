@@ -122,6 +122,10 @@ model Promo {
   usageLimit Int       @default(0) // 0 = cheksiz
   usedCount  Int       @default(0)
   isActive   Boolean   @default(true)
+  // Do'konda ro'yxat bo'lib ko'rinadimi. Maxfiy kodlar (bitta mijozga
+  // yoki blogerga berilgan) uchun false qoladi — ular faqat qo'lda
+  // kiritilganda ishlaydi.
+  isPublic   Boolean   @default(false)
   expiresAt  DateTime?
   createdAt  DateTime  @default(now())
 }

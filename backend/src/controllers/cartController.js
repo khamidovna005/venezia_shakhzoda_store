@@ -17,7 +17,7 @@ import { formatMoney, toPlain } from '../utils/helpers.js';
 
 export async function init(req, res, next) {
   try {
-    const [categories, stories, upsell, shop] = await Promise.all([
+    const [categories, stories, upsell, shop, promos] = await Promise.all([
       CategoryModel.listActive(),
       StoryModel.listActive(),
       prisma.product.findFirst({
@@ -26,6 +26,7 @@ export async function init(req, res, next) {
         include: { variants: true },
       }),
       SettingModel.getShopInfo(),
+      PromoModel.listPublic(),
     ]);
 
     res.json({
@@ -34,6 +35,7 @@ export async function init(req, res, next) {
       categories,
       stories,
       upsell,
+      promos,
       settings: {
         shopName: shop.shopName,
         currency: shop.currency,

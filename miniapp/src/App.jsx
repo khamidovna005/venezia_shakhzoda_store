@@ -204,7 +204,7 @@ export default function App() {
     return <Onboarding t={t} onFinish={finishIntro} />;
   }
 
-  const { user, categories, stories, settings, upsell } = data;
+  const { user, categories, stories, settings, upsell, promos } = data;
 
   const shared = {
     t,
@@ -226,6 +226,7 @@ export default function App() {
           {...shared}
           user={user}
           stories={stories}
+          promos={promos}
           products={products}
           onOpenStory={setStoryIndex}
           onGoCatalog={() => setTab('catalog')}

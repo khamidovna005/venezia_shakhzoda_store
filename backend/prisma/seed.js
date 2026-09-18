@@ -487,9 +487,11 @@ const stories = [
 /* ------------------------------------------------------------------ */
 /*  PROMOKODLAR                                                        */
 /* ------------------------------------------------------------------ */
+// isPublic: do'kon sahifasida ro'yxat bo'lib ko'rinadi. Maxfiy kod kerak
+// bo'lsa admin panelda "🔒 Maxfiy" qilib qo'yiladi.
 const promos = [
-  { code: 'SALOM10', type: 'PERCENT', value: 10, minTotal: 200000, usageLimit: 0 },
-  { code: 'KUZ50', type: 'FIXED', value: 50000, minTotal: 400000, usageLimit: 100 },
+  { code: 'SALOM10', type: 'PERCENT', value: 10, minTotal: 200000, usageLimit: 0, isPublic: true },
+  { code: 'KUZ50', type: 'FIXED', value: 50000, minTotal: 400000, usageLimit: 100, isPublic: true },
 ];
 
 /* ------------------------------------------------------------------ */

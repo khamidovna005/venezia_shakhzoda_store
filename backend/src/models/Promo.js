@@ -5,6 +5,35 @@ const PromoModel = {
     return prisma.promo.findMany({ orderBy: { createdAt: 'desc' } });
   },
 
+  /**
+   * Mijozga ko'rsatiladigan promokodlar.
+   * Ishlatib bo'lingan yoki muddati o'tganlari ro'yxatga tushmaydi —
+   * mijoz kiritib, keyin "ishlamadi" degan javob olmasligi uchun.
+   */
+  async listPublic() {
+    const now = new Date();
+    const rows = await prisma.promo.findMany({
+      where: {
+        isActive: true,
+        isPublic: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return rows
+      .filter((p) => p.usageLimit === 0 || p.usedCount < p.usageLimit)
+      .map((p) => ({
+        code: p.code,
+        type: p.type,
+        value: p.value,
+        minTotal: p.minTotal,
+        expiresAt: p.expiresAt,
+        // Nechta qolganini faqat cheklangan kodlarda ko'rsatamiz
+        left: p.usageLimit > 0 ? p.usageLimit - p.usedCount : null,
+      }));
+  },
+
   create(data) {
     return prisma.promo.create({ data: { ...data, code: data.code.trim().toUpperCase() } });
   },

@@ -9,6 +9,9 @@ const EMPTY = {
   minTotal: 0,
   usageLimit: 0,
   expiresAt: '',
+  // Yangi kod odatda e'lon qilish uchun yaratiladi, shuning uchun standart
+  // holatda belgilangan. Maxfiy kod kerak bo'lsa belgi yechiladi.
+  isPublic: true,
 };
 
 export default function Promos({ currency, toast }) {
@@ -48,6 +51,16 @@ export default function Promos({ currency, toast }) {
   const toggle = async (promo) => {
     try {
       await api.updatePromo(promo.id, { ...promo, isActive: !promo.isActive });
+      load();
+    } catch (err) {
+      toast(err.message);
+    }
+  };
+
+  const togglePublic = async (promo) => {
+    try {
+      await api.updatePromo(promo.id, { ...promo, isPublic: !promo.isPublic });
+      toast(promo.isPublic ? `${promo.code} endi maxfiy` : `${promo.code} do‘konda ko‘rinadi`);
       load();
     } catch (err) {
       toast(err.message);
@@ -133,6 +146,20 @@ export default function Promos({ currency, toast }) {
                 onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
               />
             </div>
+            <div className="form-row full">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.isPublic}
+                  onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
+                />
+                Do‘konda ko‘rsatish
+              </label>
+              <span className="hint">
+                Belgilansa — mijozlar do‘kon sahifasida bu kodni ko‘radi va bir bosishda
+                nusxalaydi. Belgilanmasa — kod ishlaydi, lekin faqat siz aytgan odam biladi.
+              </span>
+            </div>
           </div>
           <button className="btn" style={{ marginTop: 14 }} type="submit">
             Yaratish
@@ -158,6 +185,7 @@ export default function Promos({ currency, toast }) {
                   <th>Min. summa</th>
                   <th>Ishlatilgan</th>
                   <th>Muddati</th>
+                  <th>Ko‘rinishi</th>
                   <th>Holat</th>
                   <th style={{ width: 50 }} />
                 </tr>
@@ -175,6 +203,19 @@ export default function Promos({ currency, toast }) {
                       {p.usageLimit > 0 && ` / ${p.usageLimit}`}
                     </td>
                     <td>{p.expiresAt ? date(p.expiresAt) : '∞'}</td>
+                    <td>
+                      <button
+                        className={`badge ${p.isPublic ? 'new' : 'grey'}`}
+                        onClick={() => togglePublic(p)}
+                        title={
+                          p.isPublic
+                            ? 'Mijozlar do‘konda ko‘radi — bosib yashirasiz'
+                            : 'Faqat siz aytgan odam biladi — bosib ko‘rsatasiz'
+                        }
+                      >
+                        {p.isPublic ? '👁 Ko‘rinadi' : '🔒 Maxfiy'}
+                      </button>
+                    </td>
                     <td>
                       <button
                         className={`badge ${p.isActive ? 'confirmed' : 'grey'}`}

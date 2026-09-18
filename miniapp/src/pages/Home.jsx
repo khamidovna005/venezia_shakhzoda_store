@@ -1,5 +1,6 @@
 import { StoryBar } from '../components/Stories.jsx';
 import ProductCard from '../components/ProductCard.jsx';
+import PromoBar from '../components/PromoBar.jsx';
 
 export default function Home({
   t,
@@ -7,6 +8,7 @@ export default function Home({
   user,
   settings,
   stories,
+  promos,
   products,
   favorites,
   onOpenStory,
@@ -48,6 +50,8 @@ export default function Home({
           {t('catalog')} →
         </button>
       </div>
+
+      <PromoBar promos={promos} lang={lang} currency={settings.currency} t={t} />
 
       {hits.length > 0 && (
         <div className="section">

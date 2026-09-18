@@ -25,6 +25,11 @@ const strings = {
     hits: 'Eng ko‘p sotilganlar',
     newArrivals: 'Yangi kelganlar',
     seeAll: 'Hammasi',
+    promoTitle: 'Chegirma kodlari',
+    promoTap: 'nusxalash uchun bosing',
+    promoCopied: 'nusxalandi ✓',
+    promoFrom: 'dan boshlab',
+    promoLeft: (n) => `${n} ta qoldi`,
 
     // Katalog
     all: 'Hammasi',
@@ -128,6 +133,11 @@ const strings = {
     hits: 'Хиты продаж',
     newArrivals: 'Новинки',
     seeAll: 'Все',
+    promoTitle: 'Промокоды',
+    promoTap: 'нажмите, чтобы скопировать',
+    promoCopied: 'скопировано ✓',
+    promoFrom: 'и выше',
+    promoLeft: (n) => `осталось ${n}`,
 
     all: 'Все',
     search: 'Поиск...',
