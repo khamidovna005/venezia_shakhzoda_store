@@ -40,35 +40,78 @@ export function closeApp() {
  *
  * @returns {Promise<{lat:number, lng:number}>}
  */
-export function requestLocation() {
-  const lm = tg?.LocationManager;
+const LOCATION_TIMEOUT = 8000;
 
-  if (lm) {
-    return new Promise((resolve, reject) => {
-      const ask = () => {
-        lm.getLocation((data) => {
-          if (data?.latitude != null) {
-            resolve({ lat: data.latitude, lng: data.longitude });
-          } else {
-            // Foydalanuvchi rad etgan yoki sozlamalarda o'chirilgan
-            reject(new Error('DENIED'));
-          }
-        });
-      };
+/** Va'da belgilangan vaqtda tugamasa — majburan to'xtatamiz */
+function withTimeout(promise, ms, reason) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(reason)), ms);
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
 
+/** Telegram'ning LocationManager'i orqali so'rash */
+function viaTelegram(lm) {
+  return new Promise((resolve, reject) => {
+    const ask = () => {
+      if (lm.isLocationAvailable === false) return reject(new Error('UNSUPPORTED'));
+      lm.getLocation((data) => {
+        if (data?.latitude != null) resolve({ lat: data.latitude, lng: data.longitude });
+        else reject(new Error('DENIED'));
+      });
+    };
+
+    try {
       if (lm.isInited) ask();
       else lm.init(ask);
-    });
-  }
+    } catch {
+      reject(new Error('UNSUPPORTED'));
+    }
+  });
+}
 
+/** Brauzerning odatdagi geolokatsiyasi */
+function viaBrowser() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error('UNSUPPORTED'));
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => reject(new Error('DENIED')),
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: LOCATION_TIMEOUT },
     );
   });
+}
+
+/**
+ * Mijozning joylashuvini so'raydi.
+ *
+ * Telegram ichida brauzerning geolokatsiyasi ko'pincha bloklanadi, shuning
+ * uchun avval Telegram'ning LocationManager'i sinaladi. Lekin uning
+ * callback'i umuman chaqirilmasligi ham mumkin (eski mijoz versiyalarida) —
+ * shuning uchun har bir bosqich vaqt chegarasiga o'ralgan. Aks holda tugma
+ * "Aniqlanmoqda..." holatida abadiy qotib qoladi.
+ *
+ * @returns {Promise<{lat:number, lng:number}>}
+ */
+export async function requestLocation() {
+  const lm = tg?.LocationManager;
+  // LocationManager Bot API 8.0 dan boshlab bor
+  const supported = lm && (!tg.isVersionAtLeast || tg.isVersionAtLeast('8.0'));
+
+  if (supported) {
+    try {
+      return await withTimeout(viaTelegram(lm), LOCATION_TIMEOUT, 'TIMEOUT');
+    } catch (err) {
+      // Foydalanuvchi ataylab rad etgan bo'lsa qayta so'ramaymiz
+      if (err.message === 'DENIED') throw err;
+      // Javob bermadi yoki qo'llab-quvvatlamaydi — brauzerni sinaymiz
+    }
+  }
+
+  return withTimeout(viaBrowser(), LOCATION_TIMEOUT + 1000, 'TIMEOUT');
 }
 
 /** Telegram sozlamalarini ochadi — lokatsiya rad etilgan bo'lsa kerak bo'ladi */

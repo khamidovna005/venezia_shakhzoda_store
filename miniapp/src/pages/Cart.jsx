@@ -92,7 +92,10 @@ export default function Cart({
       haptic('success');
     } catch (err) {
       haptic('warning');
-      if (err.message === 'UNSUPPORTED') {
+      if (err.message === 'TIMEOUT') {
+        // Javob kelmadi — manzilni qo'lda yozish mumkin, buyurtma to'xtamaydi
+        toast(t('locationTimeout'));
+      } else if (err.message === 'UNSUPPORTED') {
         toast(t('locationUnsupported'));
       } else {
         // Rad etilgan bo'lsa — Telegram sozlamalaridan yoqish mumkin
