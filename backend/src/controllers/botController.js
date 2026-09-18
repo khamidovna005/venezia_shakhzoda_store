@@ -16,13 +16,15 @@ export const isMiniAppReady = config.miniAppUrl.startsWith('https://');
 /** Admin panel ham web_app tugmasi orqali ochiladi — u ham https bo'lishi shart. */
 export const isAdminPanelReady = config.adminPanelUrl.startsWith('https://');
 
-/** Asosiy klaviatura (WebApp tugmasi bilan) */
+/**
+ * Asosiy klaviatura.
+ *
+ * Do'konni ochish tugmasi bu yerda emas — u yozuv maydoni yonidagi ko'k
+ * menyu tugmasi (BotFather'dagi Menu Button). Ikkalasi bo'lsa mijoz
+ * chalkashadi, shuning uchun bittasi qoldirilgan.
+ */
 export function mainKeyboard(lang, hasPhone) {
   const rows = [];
-
-  if (isMiniAppReady) {
-    rows.push([{ text: t(lang, 'openShop'), web_app: { url: config.miniAppUrl } }]);
-  }
 
   rows.push([{ text: t(lang, 'myOrders') }, { text: t(lang, 'contactUs') }]);
 
@@ -45,10 +47,11 @@ export async function handleStart(msg) {
 
   let text = t(lang, 'welcome', user.firstName, await SettingModel.get('shopName'));
 
+  // Faqat sozlash paytida ko'rinadi — mijoz buni hech qachon ko'rmasligi kerak
   if (!isMiniAppReady) {
     text +=
-      '\n\n⚠️ <b>Do‘kon hali ulanmagan.</b>\nTerminalda <code>ngrok http 5173</code> ni ishga tushiring, ' +
-      'https manzilni <code>backend/.env</code> dagi <code>MINIAPP_URL</code> ga yozing va serverni qayta yurgizing.';
+      '\n\n⚠️ <b>Do‘kon hali ulanmagan.</b>\nServer sozlamalaridagi <code>MINIAPP_URL</code> ' +
+      'ga do‘konning <code>https://</code> manzilini yozing va qayta ishga tushiring.';
   }
 
   await safeSend(msg.chat.id, text, {

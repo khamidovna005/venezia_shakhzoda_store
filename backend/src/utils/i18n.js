@@ -1,7 +1,7 @@
 const dict = {
   uz: {
     welcome: (name, shop) =>
-      `Assalomu alaykum, <b>${name}</b>! 👋\n\n<b>${shop}</b> — zamonaviy kiyimlar do'koniga xush kelibsiz.\n\nPastdagi <b>🛍 Do'konni ochish</b> tugmasini bosing va xarid qilishni boshlang.`,
+      `Assalomu alaykum, <b>${name}</b>! 👋\n\n<b>${shop}</b> — zamonaviy kiyimlar do'koniga xush kelibsiz.\n\nYozuv maydoni yonidagi ko'k <b>🛍 Do'kon</b> tugmasini bosing va xarid qilishni boshlang.`,
     openShop: '🛍 Do‘konni ochish',
     myOrders: '📜 Buyurtmalarim',
     sharePhone: '📞 Telefon raqamni yuborish',
@@ -31,7 +31,7 @@ const dict = {
   },
   ru: {
     welcome: (name, shop) =>
-      `Здравствуйте, <b>${name}</b>! 👋\n\n<b>${shop}</b> — добро пожаловать в магазин современной одежды.\n\nНажмите кнопку <b>🛍 Открыть магазин</b> и начните покупки.`,
+      `Здравствуйте, <b>${name}</b>! 👋\n\n<b>${shop}</b> — добро пожаловать в магазин современной одежды.\n\nНажмите синюю кнопку <b>🛍 Do'kon</b> рядом с полем ввода и начните покупки.`,
     openShop: '🛍 Открыть магазин',
     myOrders: '📜 Мои заказы',
     sharePhone: '📞 Отправить номер телефона',
