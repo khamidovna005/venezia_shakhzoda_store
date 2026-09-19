@@ -10,7 +10,6 @@ import SettingModel from '../models/Setting.js';
 import { safeSend, bot } from '../core/bot.js';
 import { t } from '../utils/i18n.js';
 import { formatMoney, toPlain } from '../utils/helpers.js';
-import { paymentUrlFor } from '../utils/payment.js';
 
 /* ------------------------------------------------------------------ */
 /*  BOSHLANG'ICH MA'LUMOTLAR                                           */
@@ -45,8 +44,6 @@ export async function init(req, res, next) {
         payments: {
           cash: true,
           cardTransfer: Boolean(shop.cardNumber),
-          payme: Boolean(shop.paymeMerchantId),
-          click: Boolean(shop.clickServiceId && shop.clickMerchantId),
         },
         card: {
           number: shop.cardNumber,
@@ -204,17 +201,12 @@ export async function createOrder(req, res, next) {
       return res.status(400).json({ ok: false, error: 'Yetkazib berish manzilini kiriting' });
     }
 
-    const allowedMethods = ['CASH', 'CARD_TRANSFER', 'PAYME', 'CLICK'];
+    // Hozircha naqd va karta o'tkazmasi. Payme/Click merchant shartnomasini
+    // talab qiladi — mijoz topilganda uning rekvizitlari bilan qo'shiladi.
+    const allowedMethods = ['CASH', 'CARD_TRANSFER'];
     const method = allowedMethods.includes(paymentMethod) ? paymentMethod : 'CASH';
 
-    // Rekvizitlar sozlamalarda bo'lmasa, to'lov havolasini yasab bo'lmaydi
     const shopNow = await SettingModel.getShopInfo();
-    if (method === 'PAYME' && !shopNow.paymeMerchantId) {
-      return res.status(400).json({ ok: false, error: 'Payme hozircha ulanmagan' });
-    }
-    if (method === 'CLICK' && !(shopNow.clickServiceId && shopNow.clickMerchantId)) {
-      return res.status(400).json({ ok: false, error: 'Click hozircha ulanmagan' });
-    }
 
     // --- Narxlarni bazadan olamiz (mijoz yuborgan narxga ishonmaymiz) ---
     const productIds = [...new Set(items.map((i) => Number(i.productId)))];
@@ -328,23 +320,7 @@ export async function createOrder(req, res, next) {
       );
     }
 
-    // --- Payme / Click: to'lov havolasi ---
-    const payUrl = paymentUrlFor({ method, shop, order, lang });
-
-    if (payUrl) {
-      // Botga ham yuboramiz: mijoz ilovani yopib qo'ysa ham havola qoladi
-      await safeSend(
-        req.user.telegramId,
-        t(lang, 'payLinkText', order.orderNo, formatMoney(order.total, shop.currency)),
-        {
-          reply_markup: {
-            inline_keyboard: [[{ text: t(lang, 'payNow'), url: payUrl }]],
-          },
-        },
-      );
-    }
-
-    res.json({ ok: true, order: toPlain(order), payUrl });
+    res.json({ ok: true, order: toPlain(order) });
   } catch (err) {
     next(err);
   }

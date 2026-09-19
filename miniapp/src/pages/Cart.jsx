@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import Img from '../components/Img.jsx';
 import { pick, money } from '../lib/i18n.js';
-import { haptic, requestLocation, openLocationSettings, openExternal } from '../lib/telegram.js';
+import { haptic, requestLocation, openLocationSettings } from '../lib/telegram.js';
 import api from '../lib/api.js';
 
 export default function Cart({
@@ -92,15 +92,13 @@ export default function Cart({
       haptic('success');
     } catch (err) {
       haptic('warning');
-      if (err.message === 'TIMEOUT') {
-        // Javob kelmadi — manzilni qo'lda yozish mumkin, buyurtma to'xtamaydi
-        toast(t('locationTimeout'));
-      } else if (err.message === 'UNSUPPORTED') {
-        toast(t('locationUnsupported'));
-      } else {
-        // Rad etilgan bo'lsa — Telegram sozlamalaridan yoqish mumkin
+      if (err.message === 'DENIED') {
+        // Faqat haqiqatan rad etilganda sozlamalarni ochamiz
         toast(t('locationDenied'));
         openLocationSettings();
+      } else {
+        // Qolgan hollarda: lokatsiya majburiy emas, manzilni qo'lda yozsa bo'ladi
+        toast(t('locationTimeout'));
       }
     } finally {
       setLocating(false);
@@ -124,7 +122,7 @@ export default function Cart({
 
     setSending(true);
     try {
-      const { order, payUrl } = await api.createOrder({
+      const { order } = await api.createOrder({
         items: cart.items.map((i) => ({
           productId: i.productId,
           variantId: i.variantId,
@@ -142,12 +140,6 @@ export default function Cart({
 
       haptic('success');
       cart.clear();
-
-      // Payme/Click tanlangan bo'lsa — to'lov sahifasini ochamiz.
-      // Havola botga ham yuborilgan, shuning uchun bu yerda ochilmasa ham
-      // mijoz keyin bosib to'lay oladi.
-      if (payUrl) openExternal(payUrl);
-
       onSuccess(order);
     } catch (err) {
       setError(err.message);
@@ -179,8 +171,6 @@ export default function Cart({
   const payOptions = [
     { key: 'CASH', label: t('cash'), ico: '💵', enabled: settings.payments.cash },
     { key: 'CARD_TRANSFER', label: t('cardTransfer'), ico: '💳', enabled: settings.payments.cardTransfer },
-    { key: 'PAYME', label: t('payme'), ico: '🟢', enabled: settings.payments.payme },
-    { key: 'CLICK', label: t('click'), ico: '🔵', enabled: settings.payments.click },
   ];
 
   return (

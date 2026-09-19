@@ -101,17 +101,28 @@ export async function requestLocation() {
   // LocationManager Bot API 8.0 dan boshlab bor
   const supported = lm && (!tg.isVersionAtLeast || tg.isVersionAtLeast('8.0'));
 
+  // Telegram ataylab rad etilganini faqat shu ikki belgi bilan bilish mumkin.
+  // `getLocation` ning bo'sh javobi o'zi rad etish degani emas — Telegram
+  // Desktop/Web'da u umuman qo'llab-quvvatlanmasligi ham mumkin.
+  let ataylabRad = false;
+
   if (supported) {
     try {
       return await withTimeout(viaTelegram(lm), LOCATION_TIMEOUT, 'TIMEOUT');
     } catch (err) {
-      // Foydalanuvchi ataylab rad etgan bo'lsa qayta so'ramaymiz
-      if (err.message === 'DENIED') throw err;
-      // Javob bermadi yoki qo'llab-quvvatlamaydi — brauzerni sinaymiz
+      ataylabRad =
+        err.message === 'DENIED' && lm.isAccessRequested === true && lm.isAccessGranted === false;
+      // Qolgan barcha hollarda brauzerni sinab ko'ramiz
     }
   }
 
-  return withTimeout(viaBrowser(), LOCATION_TIMEOUT + 1000, 'TIMEOUT');
+  try {
+    return await withTimeout(viaBrowser(), LOCATION_TIMEOUT + 1000, 'TIMEOUT');
+  } catch (err) {
+    // "Ruxsat berilmagan" degan xabarni faqat haqiqatan shunday bo'lsa chiqaramiz
+    if (ataylabRad) throw new Error('DENIED');
+    throw err;
+  }
 }
 
 /** Telegram sozlamalarini ochadi — lokatsiya rad etilgan bo'lsa kerak bo'ladi */
