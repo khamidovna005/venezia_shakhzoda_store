@@ -205,6 +205,56 @@ export async function handleAiQuestion(msg) {
   });
 }
 
+/**
+ * Mijoz chatdan lokatsiya yuborganda.
+ *
+ * Mini App ichidagi lokatsiya Telegram versiyasiga bog'liq va hamma joyda
+ * ishlamaydi. Chatdagi "lokatsiya yuborish" tugmasi esa hamma versiyada
+ * ishlaydi — shuning uchun asosiy yo'l shu.
+ */
+export async function handleLocation(msg) {
+  const user = await UserModel.upsertFromTelegram(msg.from);
+  const lang = user.language || 'uz';
+  const { latitude, longitude } = msg.location || {};
+
+  if (latitude == null) return;
+
+  const order = await OrderModel.findAwaitingLocation(user.id);
+
+  if (!order) {
+    return safeSend(msg.chat.id, t(lang, 'locationNoOrder'), {
+      reply_markup: mainKeyboard(lang, Boolean(user.phone)),
+    });
+  }
+
+  await OrderModel.update(order.id, { lat: latitude, lng: longitude });
+
+  return safeSend(msg.chat.id, t(lang, 'locationThanks', order.orderNo), {
+    reply_markup: mainKeyboard(lang, Boolean(user.phone)),
+  });
+}
+
+/** Mijoz lokatsiya bermoqchi emas — asosiy klaviaturani qaytaramiz */
+export async function handleSkipLocation(msg) {
+  const user = await UserModel.upsertFromTelegram(msg.from);
+  const lang = user.language || 'uz';
+  return safeSend(msg.chat.id, t(lang, 'locationSkipped'), {
+    reply_markup: mainKeyboard(lang, Boolean(user.phone)),
+  });
+}
+
+/** Buyurtmadan keyin lokatsiya so'raydigan klaviatura */
+export function locationKeyboard(lang) {
+  return {
+    keyboard: [
+      [{ text: t(lang, 'shareLocation'), request_location: true }],
+      [{ text: t(lang, 'skipLocation') }],
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: true,
+  };
+}
+
 export async function handleLanguageMenu(msg) {
   await safeSend(msg.chat.id, '🌐 Tilni tanlang / Выберите язык:', {
     reply_markup: {

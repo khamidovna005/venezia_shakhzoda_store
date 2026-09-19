@@ -12,6 +12,7 @@ export function registerBotHandlers() {
   bot.onText(/^\/admin/, (msg) => botController.handleAdmin(msg).catch(console.error));
 
   bot.on('contact', (msg) => botController.handleContact(msg).catch(console.error));
+  bot.on('location', (msg) => botController.handleLocation(msg).catch(console.error));
   bot.on('photo', (msg) => botController.handlePhoto(msg).catch(console.error));
   bot.on('callback_query', (q) => botController.handleCallback(q).catch(console.error));
 
@@ -20,6 +21,9 @@ export function registerBotHandlers() {
     if (!text || text.startsWith('/')) return;
 
     const run = (fn) => fn(msg).catch(console.error);
+
+    // Lokatsiyadan voz kechish — asosiy klaviaturani qaytaramiz
+    if (matches(text, 'skipLocation')) return run(botController.handleSkipLocation);
 
     if (matches(text, 'myOrders')) return run(botController.handleMyOrders);
     if (matches(text, 'contactUs')) return run(botController.handleContactInfo);

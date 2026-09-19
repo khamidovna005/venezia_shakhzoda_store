@@ -19,6 +19,15 @@ const dict = {
       `🔔 <b>${orderNo}</b> raqamli buyurtmangiz holati o'zgardi:\n\n${status}`,
     askReceipt: (orderNo, card, holder, total) =>
       `💳 <b>To'lov uchun ma'lumot</b>\n\nBuyurtma: <code>${orderNo}</code>\nSumma: <b>${total}</b>\n\nKarta: <code>${card}</code>\nEgasi: <b>${holder}</b>\n\nPulni o'tkazgach, chek (skrinshot) rasmini shu yerga yuboring 📸`,
+    askLocation:
+      "📍 <b>Lokatsiyangizni yuborasizmi?</b>\n\nKuryer sizni tez va aniq topishi uchun kerak. Pastdagi tugmani bosing — bir soniyada yuboriladi.",
+    shareLocation: '📍 Lokatsiyani yuborish',
+    skipLocation: '⏭ Keyinroq',
+    locationThanks: (orderNo) =>
+      `✅ Rahmat! Lokatsiya <b>${orderNo}</b> raqamli buyurtmangizga qo‘shildi.\n\nKuryer sizni xaritadan topadi 🚚`,
+    locationNoOrder:
+      'Lokatsiya qabul qilindi, lekin unga bog‘lanadigan yangi buyurtma topilmadi.',
+    locationSkipped: 'Yaxshi. Manzil bo‘yicha yetkazamiz — kerak bo‘lsa menejer qo‘ng‘iroq qiladi.',
     receiptSaved:
       '✅ Chek qabul qilindi. Menejerimiz to‘lovni tekshirib, buyurtmani tasdiqlaydi.',
     receiptNoOrder:
@@ -49,6 +58,14 @@ const dict = {
       `🔔 Статус заказа <b>${orderNo}</b> изменён:\n\n${status}`,
     askReceipt: (orderNo, card, holder, total) =>
       `💳 <b>Информация для оплаты</b>\n\nЗаказ: <code>${orderNo}</code>\nСумма: <b>${total}</b>\n\nКарта: <code>${card}</code>\nВладелец: <b>${holder}</b>\n\nПосле перевода отправьте сюда скриншот чека 📸`,
+    askLocation:
+      '📍 <b>Отправите вашу локацию?</b>\n\nЭто нужно, чтобы курьер быстро вас нашёл. Нажмите кнопку ниже — отправится за секунду.',
+    shareLocation: '📍 Отправить локацию',
+    skipLocation: '⏭ Позже',
+    locationThanks: (orderNo) =>
+      `✅ Спасибо! Локация добавлена к заказу <b>${orderNo}</b>.\n\nКурьер найдёт вас по карте 🚚`,
+    locationNoOrder: 'Локация получена, но подходящего нового заказа не найдено.',
+    locationSkipped: 'Хорошо. Доставим по адресу — при необходимости менеджер позвонит.',
     receiptSaved: '✅ Чек принят. Менеджер проверит оплату и подтвердит заказ.',
     receiptNoOrder: 'У вас нет заказов, ожидающих оплаты.',
     contactInfo: (shop) =>

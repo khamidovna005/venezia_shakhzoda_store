@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import Img from '../components/Img.jsx';
 import { pick, money } from '../lib/i18n.js';
-import { haptic, requestLocation, openLocationSettings } from '../lib/telegram.js';
+import { haptic, requestLocation } from '../lib/telegram.js';
 import api from '../lib/api.js';
 
 export default function Cart({
@@ -90,16 +90,12 @@ export default function Cart({
       const point = await requestLocation();
       setCoords(point);
       haptic('success');
-    } catch (err) {
+    } catch {
+      // Lokatsiya bu yerda majburiy emas: buyurtmadan keyin bot uni chatdagi
+      // tugma orqali so'raydi, u hamma qurilmada ishlaydi. Shuning uchun
+      // bu yerda mijozni qo'rqitadigan xato ko'rsatmaymiz.
       haptic('warning');
-      if (err.message === 'DENIED') {
-        // Faqat haqiqatan rad etilganda sozlamalarni ochamiz
-        toast(t('locationDenied'));
-        openLocationSettings();
-      } else {
-        // Qolgan hollarda: lokatsiya majburiy emas, manzilni qo'lda yozsa bo'ladi
-        toast(t('locationTimeout'));
-      }
+      toast(t('locationLater'));
     } finally {
       setLocating(false);
     }

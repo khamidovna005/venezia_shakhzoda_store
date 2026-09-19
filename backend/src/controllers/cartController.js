@@ -8,6 +8,7 @@ import PromoModel from '../models/Promo.js';
 import OrderModel from '../models/Order.js';
 import SettingModel from '../models/Setting.js';
 import { safeSend, bot } from '../core/bot.js';
+import { locationKeyboard } from './botController.js';
 import { t } from '../utils/i18n.js';
 import { formatMoney, toPlain } from '../utils/helpers.js';
 
@@ -318,6 +319,16 @@ export async function createOrder(req, res, next) {
           formatMoney(order.total, shop.currency),
         ),
       );
+    }
+
+    // --- Lokatsiya ---
+    // Mini App ichidagi lokatsiya hamma Telegram versiyasida ishlamaydi.
+    // Shuning uchun u berilmagan bo'lsa, chatdagi tugma orqali so'raymiz —
+    // u hamma qurilmada ishlaydi.
+    if (order.lat == null) {
+      await safeSend(req.user.telegramId, t(lang, 'askLocation'), {
+        reply_markup: locationKeyboard(lang),
+      });
     }
 
     res.json({ ok: true, order: toPlain(order) });

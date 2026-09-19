@@ -31,15 +31,6 @@ export function closeApp() {
   tg?.close();
 }
 
-/**
- * Mijozning joylashuvini so'raydi.
- *
- * Telegram ichida brauzerning `navigator.geolocation` funksiyasi ko'pincha
- * bloklanadi — ayniqsa iPhone'da. Shuning uchun avval Telegram'ning o'z
- * LocationManager'i sinaladi, u bo'lmasa brauzerникиga tushiladi.
- *
- * @returns {Promise<{lat:number, lng:number}>}
- */
 const LOCATION_TIMEOUT = 8000;
 
 /** Va'da belgilangan vaqtda tugamasa — majburan to'xtatamiz */
@@ -123,24 +114,6 @@ export async function requestLocation() {
     if (ataylabRad) throw new Error('DENIED');
     throw err;
   }
-}
-
-/** Telegram sozlamalarini ochadi — lokatsiya rad etilgan bo'lsa kerak bo'ladi */
-export function openLocationSettings() {
-  tg?.LocationManager?.openSettings?.();
-}
-
-/**
- * Tashqi havolani ochadi (Payme / Click to'lov sahifasi).
- *
- * Telegram ichida `window.open` bloklanadi, shuning uchun uning o'z
- * `openLink` metodi ishlatiladi. Brauzerda test qilinganda esa odatdagi
- * yo'l bilan ochiladi.
- */
-export function openExternal(url) {
-  if (!url) return;
-  if (tg?.openLink) tg.openLink(url);
-  else window.open(url, '_blank', 'noopener');
 }
 
 /** Telegram'dan kelgan foydalanuvchi (brauzerda test qilganda null) */

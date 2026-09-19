@@ -93,6 +93,25 @@ const OrderModel = {
     });
   },
 
+  /**
+   * Lokatsiya kutayotgan oxirgi buyurtma.
+   *
+   * Faqat so'nggi sutkadagi va hali yetkazilmagan buyurtma olinadi —
+   * mijoz eski buyurtmaga tasodifan lokatsiya biriktirib yubormasligi uchun.
+   */
+  findAwaitingLocation(userId) {
+    const birKunOldin = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return prisma.order.findFirst({
+      where: {
+        userId: Number(userId),
+        lat: null,
+        createdAt: { gte: birKunOldin },
+        status: { in: ['NEW', 'CONFIRMED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
   /** Admin bosh sahifasi uchun statistika */
   async stats() {
     const startOfToday = new Date();
