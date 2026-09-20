@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import Img from '../components/Img.jsx';
 import { pick, money } from '../lib/i18n.js';
-import { haptic, requestLocation } from '../lib/telegram.js';
+import { haptic, requestLocation, openLocationSettings } from '../lib/telegram.js';
 import api from '../lib/api.js';
 
 export default function Cart({
@@ -21,6 +21,8 @@ export default function Cart({
   const [comment, setComment] = useState('');
   const [coords, setCoords] = useState(null);
   const [locating, setLocating] = useState(false);
+  const [locationIssue, setLocationIssue] = useState('');
+  const [canOpenSettings, setCanOpenSettings] = useState(false);
   const [payment, setPayment] = useState('CASH');
 
   const [promoInput, setPromoInput] = useState('');
@@ -86,19 +88,33 @@ export default function Cart({
   const getLocation = async () => {
     haptic('light');
     setLocating(true);
-    try {
-      const point = await requestLocation();
-      setCoords(point);
+    setLocationIssue('');
+
+    const res = await requestLocation();
+
+    setLocating(false);
+
+    if (res.ok) {
+      setCoords({ lat: res.lat, lng: res.lng });
       haptic('success');
-    } catch {
-      // Lokatsiya bu yerda majburiy emas: buyurtmadan keyin bot uni chatdagi
-      // tugma orqali so'raydi, u hamma qurilmada ishlaydi. Shuning uchun
-      // bu yerda mijozni qo'rqitadigan xato ko'rsatmaymiz.
-      haptic('warning');
-      toast(t('locationLater'));
-    } finally {
-      setLocating(false);
+      return;
     }
+
+    haptic('warning');
+    // Sabab aniq bo'lsa shuni ko'rsatamiz — mijoz nima qilishni biladi
+    setLocationIssue(res.reason);
+    setCanOpenSettings(res.canAskAgain);
+  };
+
+  /**
+   * Telegram sozlamalarini ochadi.
+   * Hujjat bo'yicha bu faqat foydalanuvchi bosgan zahoti ishlaydi,
+   * shuning uchun bu yerda hech qanday `await` yo'q.
+   */
+  const openSettings = () => {
+    haptic('light');
+    openLocationSettings();
+    setLocationIssue('');
   };
 
   /* ---------------- Buyurtma ---------------- */
@@ -289,10 +305,24 @@ export default function Cart({
           >
             {locating ? t('locationSearching') : coords ? t('locationSaved') : t('sendLocation')}
           </button>
+
           {coords && (
             <p className="hint" style={{ marginTop: 6 }}>
               {t('locationHint')}
             </p>
+          )}
+
+          {!coords && locationIssue && (
+            <div className="loc-note">
+              <p>{t(`locReason_${locationIssue}`)}</p>
+              {canOpenSettings ? (
+                <button type="button" className="btn btn-outline btn-sm" onClick={openSettings}>
+                  {t('locationAllow')}
+                </button>
+              ) : (
+                <p className="hint">{t('locationLater')}</p>
+              )}
+            </div>
           )}
         </div>
         <div className="field">

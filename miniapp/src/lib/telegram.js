@@ -44,20 +44,26 @@ function withTimeout(promise, ms, reason) {
   });
 }
 
+/** LocationManager'ni tayyorlaydi (hujjat bo'yicha birinchi qadam) */
+function initManager(lm) {
+  return new Promise((resolve) => {
+    if (lm.isInited) return resolve();
+    try {
+      lm.init(() => resolve());
+    } catch {
+      resolve(); // init yo'q bo'lsa ham keyingi qadamni sinaymiz
+    }
+  });
+}
+
 /** Telegram'ning LocationManager'i orqali so'rash */
 function viaTelegram(lm) {
   return new Promise((resolve, reject) => {
-    const ask = () => {
-      if (lm.isLocationAvailable === false) return reject(new Error('UNSUPPORTED'));
+    try {
       lm.getLocation((data) => {
         if (data?.latitude != null) resolve({ lat: data.latitude, lng: data.longitude });
         else reject(new Error('DENIED'));
       });
-    };
-
-    try {
-      if (lm.isInited) ask();
-      else lm.init(ask);
     } catch {
       reject(new Error('UNSUPPORTED'));
     }
@@ -87,32 +93,70 @@ function viaBrowser() {
  *
  * @returns {Promise<{lat:number, lng:number}>}
  */
+/**
+ * Mijozning joylashuvini so'raydi.
+ *
+ * Hujjatdagi tartib: init() -> isLocationAvailable -> getLocation().
+ * Telegram Desktop/Web'da LocationManager yo'q, shuning uchun brauzer
+ * geolokatsiyasi zaxira sifatida sinaladi.
+ *
+ * Xato tashlamaydi — har doim tushunarli natija qaytaradi, shunda
+ * interfeys nima ko'rsatishni aniq biladi va qotib qolmaydi.
+ *
+ * @returns {Promise<{ok:true, lat:number, lng:number}
+ *                 | {ok:false, reason:'denied'|'unavailable'|'timeout'|'none', canAskAgain:boolean}>}
+ */
 export async function requestLocation() {
   const lm = tg?.LocationManager;
-  // LocationManager Bot API 8.0 dan boshlab bor
-  const supported = lm && (!tg.isVersionAtLeast || tg.isVersionAtLeast('8.0'));
 
-  // Telegram ataylab rad etilganini faqat shu ikki belgi bilan bilish mumkin.
-  // `getLocation` ning bo'sh javobi o'zi rad etish degani emas — Telegram
-  // Desktop/Web'da u umuman qo'llab-quvvatlanmasligi ham mumkin.
-  let ataylabRad = false;
+  if (lm) {
+    await withTimeout(initManager(lm), 4000, 'TIMEOUT').catch(() => {});
 
-  if (supported) {
+    // Qurilmada lokatsiya umuman yo'q — so'rashdan foyda yo'q
+    if (lm.isLocationAvailable === false) {
+      return { ok: false, reason: 'unavailable', canAskAgain: false };
+    }
+
+    // Avval so'ralgan va rad etilgan — qayta so'rash oyna chiqarmaydi,
+    // faqat sozlamalardan yoqish mumkin
+    if (lm.isAccessRequested === true && lm.isAccessGranted === false) {
+      return { ok: false, reason: 'denied', canAskAgain: true };
+    }
+
     try {
-      return await withTimeout(viaTelegram(lm), LOCATION_TIMEOUT, 'TIMEOUT');
+      const point = await withTimeout(viaTelegram(lm), LOCATION_TIMEOUT, 'TIMEOUT');
+      return { ok: true, ...point };
     } catch (err) {
-      ataylabRad =
-        err.message === 'DENIED' && lm.isAccessRequested === true && lm.isAccessGranted === false;
-      // Qolgan barcha hollarda brauzerni sinab ko'ramiz
+      if (err.message === 'DENIED') {
+        return { ok: false, reason: 'denied', canAskAgain: true };
+      }
+      // Javob bermadi — brauzerni sinaymiz
     }
   }
 
   try {
-    return await withTimeout(viaBrowser(), LOCATION_TIMEOUT + 1000, 'TIMEOUT');
+    const point = await withTimeout(viaBrowser(), LOCATION_TIMEOUT + 1000, 'TIMEOUT');
+    return { ok: true, ...point };
   } catch (err) {
-    // "Ruxsat berilmagan" degan xabarni faqat haqiqatan shunday bo'lsa chiqaramiz
-    if (ataylabRad) throw new Error('DENIED');
-    throw err;
+    if (err.message === 'UNSUPPORTED') {
+      return { ok: false, reason: lm ? 'timeout' : 'none', canAskAgain: false };
+    }
+    return { ok: false, reason: err.message === 'DENIED' ? 'denied' : 'timeout', canAskAgain: Boolean(lm) };
+  }
+}
+
+/**
+ * Telegram'ning lokatsiya sozlamalarini ochadi.
+ *
+ * Hujjat: "faqat foydalanuvchi harakatiga javoban chaqirish mumkin".
+ * Shuning uchun bu tugma bosilgan zahoti, `await` lardan OLDIN chaqiriladi.
+ */
+export function openLocationSettings() {
+  try {
+    tg?.LocationManager?.openSettings?.();
+    return true;
+  } catch {
+    return false;
   }
 }
 
