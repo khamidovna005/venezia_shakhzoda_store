@@ -414,3 +414,53 @@ export async function requestPhoneViaBot(req, res, next) {
     next(err);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  LOKATSIYA                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Chatda lokatsiya so'rash tugmasini yuboradi.
+ *
+ * Ba'zi qurilmalarda Mini App ichidan lokatsiya olishning iloji yo'q
+ * (Telegram Desktop/Web, eski versiyalar). Shunda savatchadagi tugma
+ * chatdagi tugmani chaqiradi — u hamma joyda ishlaydi.
+ */
+export async function requestLocationViaBot(req, res, next) {
+  try {
+    const lang = req.user.language || 'uz';
+    await bot
+      .sendMessage(req.user.telegramId, t(lang, 'askLocationNow'), {
+        parse_mode: 'HTML',
+        reply_markup: {
+          keyboard: [[{ text: t(lang, 'shareLocation'), request_location: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      })
+      .catch(() => {});
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Mijoz chatda yuborgan lokatsiyani qaytaradi.
+ * Savatcha shu yo'lni qisqa vaqt kuzatib turadi.
+ */
+export async function getMyLocation(req, res, next) {
+  try {
+    const user = await UserModel.findById(req.user.id);
+    // Faqat yaqinda yuborilgani — eski koordinata tasodifan ishlatilmasin
+    const yangimi =
+      user?.lastLocAt && Date.now() - new Date(user.lastLocAt).getTime() < 10 * 60 * 1000;
+
+    res.json({
+      ok: true,
+      location: yangimi ? { lat: user.lastLat, lng: user.lastLng } : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+}

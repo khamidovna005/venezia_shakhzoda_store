@@ -39,6 +39,9 @@ export const api = {
   updateProfile: (body) => request('/profile', { method: 'POST', body: JSON.stringify(body) }),
   requestPhone: () => request('/request-phone', { method: 'POST' }),
 
+  requestLocation: () => request('/request-location', { method: 'POST' }),
+  myLocation: () => request('/location'),
+
   checkPromo: (code, subtotal) =>
     request('/promo/check', { method: 'POST', body: JSON.stringify({ code, subtotal }) }),
 

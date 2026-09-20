@@ -23,6 +23,7 @@ export default function Cart({
   const [locating, setLocating] = useState(false);
   const [locationIssue, setLocationIssue] = useState('');
   const [canOpenSettings, setCanOpenSettings] = useState(false);
+  const [waitingChat, setWaitingChat] = useState(false);
   const [payment, setPayment] = useState('CASH');
 
   const [promoInput, setPromoInput] = useState('');
@@ -92,18 +93,62 @@ export default function Cart({
 
     const res = await requestLocation();
 
-    setLocating(false);
-
     if (res.ok) {
       setCoords({ lat: res.lat, lng: res.lng });
       haptic('success');
+      setLocating(false);
       return;
     }
 
-    haptic('warning');
-    // Sabab aniq bo'lsa shuni ko'rsatamiz — mijoz nima qilishni biladi
-    setLocationIssue(res.reason);
-    setCanOpenSettings(res.canAskAgain);
+    // Ruxsat berilmagan bo'lsa — sozlamani ochish tugmasini ko'rsatamiz
+    if (res.reason === 'denied') {
+      setLocationIssue('denied');
+      setCanOpenSettings(true);
+      setLocating(false);
+      haptic('warning');
+      return;
+    }
+
+    // Qurilma ilova ichidan lokatsiya bera olmaydi — chatdagi tugmaga
+    // o'tamiz. U Telegram'ning hamma versiyasida ishlaydi.
+    await askViaChat();
+  };
+
+  /**
+   * Chatdagi lokatsiya tugmasini chaqiradi va javobni kutadi.
+   * Mijoz chatda tugmani bosishi bilan koordinata savatchaga tushadi.
+   */
+  const askViaChat = async () => {
+    setWaitingChat(true);
+    setLocating(false);
+
+    try {
+      await api.requestLocation();
+    } catch {
+      setWaitingChat(false);
+      setLocationIssue('timeout');
+      setCanOpenSettings(false);
+      return;
+    }
+
+    // 90 soniya davomida har 3 soniyada natijani so'raymiz
+    for (let i = 0; i < 30; i += 1) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const { location } = await api.myLocation();
+        if (location) {
+          setCoords(location);
+          setWaitingChat(false);
+          haptic('success');
+          return;
+        }
+      } catch {
+        /* tarmoq uzilsa keyingi urinishda qaytadan so'raymiz */
+      }
+    }
+
+    // Kutish tugadi — mijoz keyinroq bosishi mumkin, buyurtma to'xtamaydi
+    setWaitingChat(false);
   };
 
   /**
@@ -301,9 +346,15 @@ export default function Cart({
           <button
             className={`btn ${coords ? 'btn-ghost' : 'btn-outline'}`}
             onClick={getLocation}
-            disabled={locating}
+            disabled={locating || waitingChat}
           >
-            {locating ? t('locationSearching') : coords ? t('locationSaved') : t('sendLocation')}
+            {locating
+              ? t('locationSearching')
+              : waitingChat
+                ? t('locationWaitingChat')
+                : coords
+                  ? t('locationSaved')
+                  : t('sendLocation')}
           </button>
 
           {coords && (
@@ -312,7 +363,14 @@ export default function Cart({
             </p>
           )}
 
-          {!coords && locationIssue && (
+          {waitingChat && (
+            <div className="loc-note">
+              <p>{t('locationCheckChat')}</p>
+              <p className="hint">{t('locationCheckChatHint')}</p>
+            </div>
+          )}
+
+          {!coords && !waitingChat && locationIssue && (
             <div className="loc-note">
               <p>{t(`locReason_${locationIssue}`)}</p>
               {canOpenSettings ? (

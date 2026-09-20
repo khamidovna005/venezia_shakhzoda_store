@@ -25,8 +25,10 @@ const dict = {
     skipLocation: '⏭ Keyinroq',
     locationThanks: (orderNo) =>
       `✅ Rahmat! Lokatsiya <b>${orderNo}</b> raqamli buyurtmangizga qo‘shildi.\n\nKuryer sizni xaritadan topadi 🚚`,
-    locationNoOrder:
-      'Lokatsiya qabul qilindi, lekin unga bog‘lanadigan yangi buyurtma topilmadi.',
+    askLocationNow:
+      "📍 <b>Lokatsiyani yuboring</b>\n\nPastdagi tugmani bosing — keyin do‘kon oynasiga qayting, lokatsiya avtomatik qo‘shiladi.",
+    locationSavedBackToApp:
+      '✅ Lokatsiya qabul qilindi!\n\nEndi do‘kon oynasiga qayting — u yerda avtomatik qo‘shiladi.',
     locationSkipped: 'Yaxshi. Manzil bo‘yicha yetkazamiz — kerak bo‘lsa menejer qo‘ng‘iroq qiladi.',
     receiptSaved:
       '✅ Chek qabul qilindi. Menejerimiz to‘lovni tekshirib, buyurtmani tasdiqlaydi.',
@@ -64,7 +66,10 @@ const dict = {
     skipLocation: '⏭ Позже',
     locationThanks: (orderNo) =>
       `✅ Спасибо! Локация добавлена к заказу <b>${orderNo}</b>.\n\nКурьер найдёт вас по карте 🚚`,
-    locationNoOrder: 'Локация получена, но подходящего нового заказа не найдено.',
+    askLocationNow:
+      '📍 <b>Отправьте локацию</b>\n\nНажмите кнопку ниже, затем вернитесь в магазин — локация добавится автоматически.',
+    locationSavedBackToApp:
+      '✅ Локация получена!\n\nВернитесь в окно магазина — она добавится автоматически.',
     locationSkipped: 'Хорошо. Доставим по адресу — при необходимости менеджер позвонит.',
     receiptSaved: '✅ Чек принят. Менеджер проверит оплату и подтвердит заказ.',
     receiptNoOrder: 'У вас нет заказов, ожидающих оплаты.',

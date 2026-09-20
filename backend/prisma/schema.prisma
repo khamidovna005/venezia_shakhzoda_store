@@ -11,16 +11,22 @@ datasource db {
 //  MIJOZ
 // ============================================================
 model User {
-  id         Int      @id @default(autoincrement())
-  telegramId String   @unique
+  id         Int       @id @default(autoincrement())
+  telegramId String    @unique
   firstName  String
   lastName   String?
   username   String?
   phone      String?
-  language   String   @default("uz")
-  seenIntro  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  language   String    @default("uz")
+  seenIntro  Boolean   @default(false)
+  // Chatdagi tugma orqali yuborilgan oxirgi lokatsiya. Mini App uni shu
+  // yerdan o'qib oladi — ba'zi qurilmalarda ilova ichidan lokatsiya
+  // olishning iloji yo'q.
+  lastLat    Float?
+  lastLng    Float?
+  lastLocAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   orders    Order[]
   favorites Favorite[]

@@ -18,6 +18,10 @@ router.post('/favorites/:productId', cart.toggleFavorite);
 router.post('/profile', cart.updateProfile);
 router.post('/request-phone', cart.requestPhoneViaBot);
 
+// Lokatsiya: chatdagi tugmani chaqirish va natijasini o'qish
+router.post('/request-location', cart.requestLocationViaBot);
+router.get('/location', cart.getMyLocation);
+
 router.post('/promo/check', cart.checkPromo);
 
 router.post('/orders', cart.createOrder);

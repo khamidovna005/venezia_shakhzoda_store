@@ -219,17 +219,27 @@ export async function handleLocation(msg) {
 
   if (latitude == null) return;
 
+  // Har doim mijozga saqlaymiz — savatcha buni o'qib oladi. Shu tufayli
+  // Mini App ichida lokatsiya ishlamaydigan qurilmalarda ham tugma
+  // to'liq ishlaydi.
+  await UserModel.update(user.id, {
+    lastLat: latitude,
+    lastLng: longitude,
+    lastLocAt: new Date(),
+  }).catch(() => {});
+
   const order = await OrderModel.findAwaitingLocation(user.id);
 
-  if (!order) {
-    return safeSend(msg.chat.id, t(lang, 'locationNoOrder'), {
+  // Buyurtma bo'lsa — unga ham biriktiramiz
+  if (order) {
+    await OrderModel.update(order.id, { lat: latitude, lng: longitude });
+    return safeSend(msg.chat.id, t(lang, 'locationThanks', order.orderNo), {
       reply_markup: mainKeyboard(lang, Boolean(user.phone)),
     });
   }
 
-  await OrderModel.update(order.id, { lat: latitude, lng: longitude });
-
-  return safeSend(msg.chat.id, t(lang, 'locationThanks', order.orderNo), {
+  // Buyurtmadan oldin yuborilgan — savatchaga qaytishini aytamiz
+  return safeSend(msg.chat.id, t(lang, 'locationSavedBackToApp'), {
     reply_markup: mainKeyboard(lang, Boolean(user.phone)),
   });
 }
