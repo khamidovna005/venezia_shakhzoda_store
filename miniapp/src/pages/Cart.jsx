@@ -100,18 +100,12 @@ export default function Cart({
       return;
     }
 
-    // Ruxsat berilmagan bo'lsa — sozlamani ochish tugmasini ko'rsatamiz
-    if (res.reason === 'denied') {
-      setLocationIssue('denied');
-      setCanOpenSettings(true);
-      setLocating(false);
-      haptic('warning');
-      return;
-    }
-
-    // Qurilma ilova ichidan lokatsiya bera olmaydi — chatdagi tugmaga
-    // o'tamiz. U Telegram'ning hamma versiyasida ishlaydi.
-    await askViaChat();
+    // Ilova ichidagi ikkala yo'l ham natija bermadi. Sababni ko'rsatamiz
+    // va zaxira tugmani beramiz — mijoz o'zi tanlaydi.
+    setLocating(false);
+    haptic('warning');
+    setLocationIssue(res.reason);
+    setCanOpenSettings(res.reason === 'denied' && res.canAskAgain);
   };
 
   /**
@@ -373,13 +367,18 @@ export default function Cart({
           {!coords && !waitingChat && locationIssue && (
             <div className="loc-note">
               <p>{t(`locReason_${locationIssue}`)}</p>
-              {canOpenSettings ? (
-                <button type="button" className="btn btn-outline btn-sm" onClick={openSettings}>
-                  {t('locationAllow')}
+
+              <div className="loc-actions">
+                {canOpenSettings && (
+                  <button type="button" className="btn btn-outline btn-sm" onClick={openSettings}>
+                    {t('locationAllow')}
+                  </button>
+                )}
+                {/* Zaxira yo'l: chatdagi tugma hamma qurilmada ishlaydi */}
+                <button type="button" className="btn btn-outline btn-sm" onClick={askViaChat}>
+                  {t('locationViaChat')}
                 </button>
-              ) : (
-                <p className="hint">{t('locationLater')}</p>
-              )}
+              </div>
             </div>
           )}
         </div>

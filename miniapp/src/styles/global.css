@@ -1552,3 +1552,10 @@ img {
   font-size: 13.5px;
   width: auto;
 }
+
+/* Ikkita zaxira tugma yonma-yon; joy tor bo'lsa pastga tushadi */
+.loc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

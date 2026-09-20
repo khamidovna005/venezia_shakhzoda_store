@@ -76,72 +76,72 @@ function viaBrowser() {
     if (!navigator.geolocation) return reject(new Error('UNSUPPORTED'));
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => reject(new Error('DENIED')),
+      (err) => {
+        // 1 = ruxsat berilmadi, 2 = joy aniqlanmadi, 3 = vaqt tugadi.
+        // Farqlash muhim: mijozga noto'g'ri sabab ko'rsatmaslik uchun.
+        reject(new Error(err?.code === 1 ? 'DENIED' : 'TIMEOUT'));
+      },
       { enableHighAccuracy: true, timeout: LOCATION_TIMEOUT },
     );
   });
 }
 
 /**
- * Mijozning joylashuvini so'raydi.
+ * Mijozning joylashuvini ilova ichidan so'raydi.
  *
- * Telegram ichida brauzerning geolokatsiyasi ko'pincha bloklanadi, shuning
- * uchun avval Telegram'ning LocationManager'i sinaladi. Lekin uning
- * callback'i umuman chaqirilmasligi ham mumkin (eski mijoz versiyalarida) —
- * shuning uchun har bir bosqich vaqt chegarasiga o'ralgan. Aks holda tugma
- * "Aniqlanmoqda..." holatida abadiy qotib qoladi.
+ * Ikkita mustaqil yo'l sinaladi va ikkalasi ham tugaguncha taslim
+ * bo'linmaydi:
+ *   1. Telegram LocationManager (Bot API 8.0+, telefonlarda)
+ *   2. Brauzer geolokatsiyasi (Telegram Desktop'da ko'pincha shu ishlaydi)
  *
- * @returns {Promise<{lat:number, lng:number}>}
- */
-/**
- * Mijozning joylashuvini so'raydi.
+ * `isLocationAvailable === false` bo'lsa ham brauzer yo'li sinaladi —
+ * bu bayroq faqat Telegram'ning o'z mexanizmi haqida gapiradi, brauzer
+ * geolokatsiyasi esa undan mustaqil.
  *
- * Hujjatdagi tartib: init() -> isLocationAvailable -> getLocation().
- * Telegram Desktop/Web'da LocationManager yo'q, shuning uchun brauzer
- * geolokatsiyasi zaxira sifatida sinaladi.
- *
- * Xato tashlamaydi — har doim tushunarli natija qaytaradi, shunda
- * interfeys nima ko'rsatishni aniq biladi va qotib qolmaydi.
+ * Xato tashlamaydi: har doim tushunarli natija qaytaradi.
  *
  * @returns {Promise<{ok:true, lat:number, lng:number}
  *                 | {ok:false, reason:'denied'|'unavailable'|'timeout'|'none', canAskAgain:boolean}>}
  */
 export async function requestLocation() {
   const lm = tg?.LocationManager;
+  let radEtilgan = false;
 
   if (lm) {
-    await withTimeout(initManager(lm), 4000, 'TIMEOUT').catch(() => {});
+    await withTimeout(initManager(lm), 2500, 'TIMEOUT').catch(() => {});
 
-    // Qurilmada lokatsiya umuman yo'q — so'rashdan foyda yo'q
-    if (lm.isLocationAvailable === false) {
-      return { ok: false, reason: 'unavailable', canAskAgain: false };
-    }
+    // Avval so'ralgan va rad etilgan bo'lsa, qayta so'rov oynasi chiqmaydi.
+    // Shunda Telegram yo'lini o'tkazib yuboramiz, lekin brauzerni baribir
+    // sinaymiz — u alohida ruxsat so'rashi mumkin.
+    radEtilgan = lm.isAccessRequested === true && lm.isAccessGranted === false;
 
-    // Avval so'ralgan va rad etilgan — qayta so'rash oyna chiqarmaydi,
-    // faqat sozlamalardan yoqish mumkin
-    if (lm.isAccessRequested === true && lm.isAccessGranted === false) {
-      return { ok: false, reason: 'denied', canAskAgain: true };
-    }
+    // Telegram o'zi "menda lokatsiya yo'q" desa, 8 soniya javobsiz kutmaymiz.
+    // Bu bayroq faqat Telegram mexanizmiga tegishli — brauzer yo'li baribir
+    // quyida sinaladi.
+    const telegramSinaladi = lm.isLocationAvailable !== false && !radEtilgan;
 
-    try {
-      const point = await withTimeout(viaTelegram(lm), LOCATION_TIMEOUT, 'TIMEOUT');
-      return { ok: true, ...point };
-    } catch (err) {
-      if (err.message === 'DENIED') {
-        return { ok: false, reason: 'denied', canAskAgain: true };
+    if (telegramSinaladi) {
+      try {
+        const point = await withTimeout(viaTelegram(lm), LOCATION_TIMEOUT, 'TIMEOUT');
+        return { ok: true, ...point };
+      } catch (err) {
+        if (err.message === 'DENIED') radEtilgan = true;
       }
-      // Javob bermadi — brauzerni sinaymiz
     }
   }
 
+  // Brauzer yo'li — Telegram nima degan bo'lsa ham sinaymiz
   try {
     const point = await withTimeout(viaBrowser(), LOCATION_TIMEOUT + 1000, 'TIMEOUT');
     return { ok: true, ...point };
   } catch (err) {
-    if (err.message === 'UNSUPPORTED') {
-      return { ok: false, reason: lm ? 'timeout' : 'none', canAskAgain: false };
+    if (radEtilgan || err.message === 'DENIED') {
+      return { ok: false, reason: 'denied', canAskAgain: Boolean(lm) };
     }
-    return { ok: false, reason: err.message === 'DENIED' ? 'denied' : 'timeout', canAskAgain: Boolean(lm) };
+    if (err.message === 'UNSUPPORTED') {
+      return { ok: false, reason: 'unavailable', canAskAgain: false };
+    }
+    return { ok: false, reason: 'timeout', canAskAgain: false };
   }
 }
 
