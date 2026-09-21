@@ -11,20 +11,29 @@ const FILTERS = [
   { key: 'CANCELLED', label: '❌ Bekor' },
 ];
 
+/** Bir marta yuklanadigan buyurtmalar soni */
+const PAGE = 50;
+
 export default function Orders({ currency, toast, onChanged }) {
   const [orders, setOrders] = useState([]);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  // Nechta sahifa ochilgani. Har doim boshidan yuklaymiz (skip: 0) —
+  // shunda yangi buyurtma kelib qolsa ham ro'yxat siljib ketmaydi va
+  // takrorlanmaydi.
+  const [pages, setPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback(
-    async (silent = false) => {
+    async ({ silent = false, pages: want = 1 } = {}) => {
       if (!silent) setLoading(true);
       try {
-        const res = await api.orders({ status, search, take: 100 });
+        const res = await api.orders({ status, search, skip: 0, take: PAGE * want });
         setOrders(res.orders);
         setTotal(res.total);
+        setPages(want);
       } catch (err) {
         toast(err.message);
       } finally {
@@ -34,21 +43,29 @@ export default function Orders({ currency, toast, onChanged }) {
     [status, search, toast],
   );
 
+  // Filtr yoki qidiruv o'zgarsa — birinchi sahifadan boshlanadi
   useEffect(() => {
-    load();
+    load({ pages: 1 });
   }, [load]);
 
-  // Real vaqt effekti: har 15 soniyada jimgina yangilanadi
+  // Real vaqt effekti: har 15 soniyada jimgina yangilanadi.
+  // Ochilgan sahifalar soni saqlanadi — ro'yxat qisqarib qolmaydi.
   useEffect(() => {
-    const timer = setInterval(() => load(true), 15000);
+    const timer = setInterval(() => load({ silent: true, pages }), 15000);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, pages]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    await load({ silent: true, pages: pages + 1 });
+    setLoadingMore(false);
+  };
 
   const changeStatus = async (order, next) => {
     try {
       await api.setOrderStatus(order.id, next);
       toast(`${order.orderNo} → ${STATUS[next].label}. Mijozga botda xabar yuborildi.`);
-      load(true);
+      load({ silent: true, pages });
       onChanged?.();
     } catch (err) {
       toast(err.message);
@@ -59,7 +76,7 @@ export default function Orders({ currency, toast, onChanged }) {
     try {
       await api.setPaymentStatus(order.id, next);
       toast(`${order.orderNo} to‘lovi: ${PAYMENT_STATUS[next]}`);
-      load(true);
+      load({ silent: true, pages });
     } catch (err) {
       toast(err.message);
     }
@@ -70,7 +87,7 @@ export default function Orders({ currency, toast, onChanged }) {
     try {
       await api.deleteOrder(order.id);
       toast('Buyurtma o‘chirildi');
-      load(true);
+      load({ silent: true, pages });
       onChanged?.();
     } catch (err) {
       toast(err.message);
@@ -84,10 +101,13 @@ export default function Orders({ currency, toast, onChanged }) {
           <h1>Buyurtmalar</h1>
           <p>
             <span className="live-dot" />
-            Jami {total} ta · avtomatik yangilanadi
+            {orders.length < total
+              ? `${orders.length} / ${total} ta ko‘rsatilmoqda`
+              : `Jami ${total} ta`}{' '}
+            · avtomatik yangilanadi
           </p>
         </div>
-        <button className="btn btn-ghost" onClick={() => load()}>
+        <button className="btn btn-ghost" onClick={() => load({ pages })}>
           ↻ Yangilash
         </button>
       </div>
@@ -237,6 +257,15 @@ export default function Orders({ currency, toast, onChanged }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Eski buyurtmalar yo'qolmasin — qolganini shu yerdan ochamiz */}
+        {!loading && orders.length < total && (
+          <div className="load-more">
+            <button className="btn btn-ghost" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? 'Yuklanmoqda…' : `↓ Yana ${Math.min(PAGE, total - orders.length)} ta`}
+            </button>
           </div>
         )}
       </div>
