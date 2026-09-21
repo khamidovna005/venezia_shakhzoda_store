@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api.js';
+import { useLang } from '../lib/lang.jsx';
+import { pick } from '../lib/i18n.js';
 
 const EMPTY = { nameUz: '', nameRu: '', emoji: '👕', sortOrder: 0 };
 
 export default function Categories({ toast }) {
+  const { t, lang } = useLang();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(EMPTY);
@@ -29,7 +32,7 @@ export default function Categories({ toast }) {
     if (!form.nameUz.trim()) return;
     try {
       await api.createCategory(form);
-      toast('Kategoriya qo‘shildi ✓');
+      toast(t('catAdded'));
       setForm(EMPTY);
       load();
     } catch (err) {
@@ -38,18 +41,14 @@ export default function Categories({ toast }) {
   };
 
   const remove = async (category) => {
+    const nomi = pick(category, 'name', lang);
     if (category._count.products > 0) {
-      if (
-        !confirm(
-          `"${category.nameUz}" ichida ${category._count.products} ta mahsulot bor. Ular ham o‘chiriladi. Davom etasizmi?`,
-        )
-      )
-        return;
-    } else if (!confirm(`"${category.nameUz}" o‘chirilsinmi?`)) return;
+      if (!confirm(t('catRemoveWithProducts', nomi, category._count.products))) return;
+    } else if (!confirm(t('removeConfirm', nomi))) return;
 
     try {
       await api.deleteCategory(category.id);
-      toast('O‘chirildi');
+      toast(t('removed'));
       load();
     } catch (err) {
       toast(err.message);
@@ -69,17 +68,17 @@ export default function Categories({ toast }) {
     <>
       <div className="page-head">
         <div>
-          <h1>Kategoriyalar</h1>
-          <p>Mini App katalogidagi filtr teglari</p>
+          <h1>{t('catTitle')}</h1>
+          <p>{t('catSub')}</p>
         </div>
       </div>
 
       <div className="panel" style={{ marginBottom: 20 }}>
-        <div className="panel-head">➕ Yangi kategoriya</div>
+        <div className="panel-head">{t('catNew')}</div>
         <form className="modal-body" onSubmit={add}>
           <div className="form-grid">
             <div className="form-row">
-              <label>Nomi (UZ)</label>
+              <label>{t('catNameUz')}</label>
               <input
                 type="text"
                 value={form.nameUz}
@@ -88,7 +87,7 @@ export default function Categories({ toast }) {
               />
             </div>
             <div className="form-row">
-              <label>Nomi (RU)</label>
+              <label>{t('catNameRu')}</label>
               <input
                 type="text"
                 value={form.nameRu}
@@ -97,7 +96,7 @@ export default function Categories({ toast }) {
               />
             </div>
             <div className="form-row">
-              <label>Emoji</label>
+              <label>{t('catEmoji')}</label>
               <input
                 type="text"
                 value={form.emoji}
@@ -105,7 +104,7 @@ export default function Categories({ toast }) {
               />
             </div>
             <div className="form-row">
-              <label>Tartib raqami</label>
+              <label>{t('catOrder')}</label>
               <input
                 type="number"
                 value={form.sortOrder}
@@ -114,7 +113,7 @@ export default function Categories({ toast }) {
             </div>
           </div>
           <button className="btn" style={{ marginTop: 14 }} type="submit">
-            Qo‘shish
+            {t('add')}
           </button>
         </form>
       </div>
@@ -127,11 +126,11 @@ export default function Categories({ toast }) {
             <table>
               <thead>
                 <tr>
-                  <th>Kategoriya</th>
+                  <th>{t('colCategory')}</th>
                   <th>Slug</th>
-                  <th>Mahsulotlar</th>
-                  <th>Tartib</th>
-                  <th>Holat</th>
+                  <th>{t('navProducts')}</th>
+                  <th>{t('catOrderShort')}</th>
+                  <th>{t('statusCol')}</th>
                   <th style={{ width: 50 }} />
                 </tr>
               </thead>
@@ -139,8 +138,8 @@ export default function Categories({ toast }) {
                 {categories.map((c) => (
                   <tr key={c.id}>
                     <td className="cell-main">
-                      {c.emoji} {c.nameUz}
-                      <div className="cell-sub">{c.nameRu}</div>
+                      {c.emoji} {pick(c, 'name', lang)}
+                      <div className="cell-sub">{lang === 'ru' ? c.nameUz : c.nameRu}</div>
                     </td>
                     <td>
                       <code>{c.slug}</code>
@@ -152,7 +151,7 @@ export default function Categories({ toast }) {
                         className={`badge ${c.isActive ? 'confirmed' : 'grey'}`}
                         onClick={() => toggle(c)}
                       >
-                        {c.isActive ? 'Faol' : 'Yashirin'}
+                        {c.isActive ? t('active') : t('hidden')}
                       </button>
                     </td>
                     <td>

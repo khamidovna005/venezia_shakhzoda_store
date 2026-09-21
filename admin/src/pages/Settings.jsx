@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
+import { useLang } from '../lib/lang.jsx';
 
 const FIELDS = [
-  { key: 'shopName', label: "Do'kon nomi", hint: 'Botdagi salomlashish xabarida chiqadi' },
-  { key: 'currency', label: 'Valyuta', hint: "masalan: so'm" },
-  { key: 'cardNumber', label: 'Karta raqami', hint: "O'tkazma shu kartaga qilinadi" },
-  { key: 'cardHolder', label: 'Karta egasi', hint: 'Kartadagi ism-familiya' },
-  { key: 'deliveryFee', label: 'Yetkazib berish narxi', type: 'number' },
-  { key: 'freeDeliveryFrom', label: 'Shu summadan bepul', type: 'number' },
-  { key: 'contactPhone', label: 'Aloqa telefoni', hint: "Mijozlar ko'radi" },
-  { key: 'contactAddress', label: 'Manzil', hint: "Do'kon manzili" },
+  { key: 'shopName', label: 'setShopName', hint: 'setShopNameHint' },
+  { key: 'currency', label: 'setCurrency', hint: 'setCurrencyHint' },
+  { key: 'cardNumber', label: 'setCardNumber', hint: 'setCardNumberHint' },
+  { key: 'cardHolder', label: 'setCardHolder', hint: 'setCardHolderHint' },
+  { key: 'deliveryFee', label: 'setDeliveryFee', type: 'number' },
+  { key: 'freeDeliveryFrom', label: 'setFreeFrom', type: 'number' },
+  { key: 'contactPhone', label: 'setPhone', hint: 'setPhoneHint' },
+  { key: 'contactAddress', label: 'setAddress', hint: 'setAddressHint' },
 ];
 
 export default function Settings() {
+  const { t } = useLang();
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
@@ -42,7 +44,7 @@ export default function Settings() {
     setError('');
     try {
       await api.saveSettings(form);
-      flash('✅ Sozlamalar saqlandi');
+      flash(t('setSaved'));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,14 +56,14 @@ export default function Settings() {
     e.preventDefault();
     setPwError('');
 
-    if (pw.next.length < 8) return setPwError("Yangi parol kamida 8 ta belgi bo'lsin");
-    if (pw.next !== pw.repeat) return setPwError('Yangi parollar bir xil emas');
+    if (pw.next.length < 8) return setPwError(t('setPwTooShort'));
+    if (pw.next !== pw.repeat) return setPwError(t('setPwMismatch'));
 
     setPwBusy(true);
     try {
       await api.changePassword(pw.current, pw.next);
       setPw({ current: '', next: '', repeat: '' });
-      flash('✅ Parol o‘zgartirildi');
+      flash(t('setPwChanged'));
     } catch (err) {
       setPwError(err.message);
     } finally {
@@ -76,21 +78,21 @@ export default function Settings() {
     <>
       <div className="page-head">
         <div>
-          <h1>Sozlamalar</h1>
-          <p>Do‘kon ma’lumotlari va kirish paroli</p>
+          <h1>{t('setTitle')}</h1>
+          <p>{t('setSub')}</p>
         </div>
       </div>
 
       {error && <div className="alert error">{error}</div>}
 
       <form className="panel" onSubmit={save} style={{ marginBottom: 22 }}>
-        <div className="panel-head">🏪 Do‘kon ma’lumotlari</div>
+        <div className="panel-head">{t('setShopBlock')}</div>
         <div className="modal-body">
           <div className="form-grid">
             {FIELDS.map((f) => (
               <div className="form-row" key={f.key}>
                 <label>
-                  {f.label} {f.hint && <span className="hint">— {f.hint}</span>}
+                  {t(f.label)} {f.hint && <span className="hint">— {t(f.hint)}</span>}
                 </label>
                 <input
                   type={f.type || 'text'}
@@ -103,18 +105,18 @@ export default function Settings() {
         </div>
         <div className="modal-foot">
           <button className="btn" disabled={saving}>
-            {saving ? 'Saqlanmoqda…' : 'Saqlash'}
+            {saving ? t('saving') : t('save')}
           </button>
         </div>
       </form>
 
       <form className="panel" onSubmit={savePassword}>
-        <div className="panel-head">🔐 Kirish paroli</div>
+        <div className="panel-head">{t('setPwBlock')}</div>
         <div className="modal-body">
           {pwError && <div className="alert error">{pwError}</div>}
           <div className="form-grid">
             <div className="form-row full">
-              <label>Joriy parol</label>
+              <label>{t('setPwCurrent')}</label>
               <input
                 type="password"
                 value={pw.current}
@@ -124,7 +126,7 @@ export default function Settings() {
             </div>
             <div className="form-row">
               <label>
-                Yangi parol <span className="hint">— kamida 8 ta belgi</span>
+                {t('setPwNew')} <span className="hint">{t('setPwNewHint')}</span>
               </label>
               <input
                 type="password"
@@ -134,7 +136,7 @@ export default function Settings() {
               />
             </div>
             <div className="form-row">
-              <label>Yangi parolni takrorlang</label>
+              <label>{t('setPwRepeat')}</label>
               <input
                 type="password"
                 value={pw.repeat}
@@ -146,7 +148,7 @@ export default function Settings() {
         </div>
         <div className="modal-foot">
           <button className="btn" disabled={pwBusy || !pw.current || !pw.next}>
-            {pwBusy ? 'O‘zgartirilmoqda…' : 'Parolni o‘zgartirish'}
+            {pwBusy ? t('setPwChanging') : t('setPwChange')}
           </button>
         </div>
       </form>

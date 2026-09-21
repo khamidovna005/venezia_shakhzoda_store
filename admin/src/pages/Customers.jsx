@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api.js';
 import { date } from '../lib/format.js';
+import { useLang } from '../lib/lang.jsx';
 
 export default function Customers({ toast }) {
+  const { t } = useLang();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState(null);
@@ -23,7 +25,7 @@ export default function Customers({ toast }) {
     setSending(true);
     try {
       await api.messageUser(target.telegramId, text);
-      toast(`${target.firstName}ga xabar yuborildi ✓`);
+      toast(t('custMessageSent', target.firstName));
       setTarget(null);
       setText('');
     } catch (err) {
@@ -37,8 +39,8 @@ export default function Customers({ toast }) {
     <>
       <div className="page-head">
         <div>
-          <h1>Mijozlar</h1>
-          <p>Jami {users.length} ta ro‘yxatdan o‘tgan foydalanuvchi</p>
+          <h1>{t('custTitle')}</h1>
+          <p>{t('custSub', users.length)}</p>
         </div>
       </div>
 
@@ -48,19 +50,19 @@ export default function Customers({ toast }) {
         ) : users.length === 0 ? (
           <div className="empty-state">
             <div className="ico">👥</div>
-            Mijozlar yo‘q
+            {t('custNone')}
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Ism</th>
+                  <th>{t('custName')}</th>
                   <th>Telegram</th>
-                  <th>Telefon</th>
-                  <th>Til</th>
-                  <th>Buyurtmalar</th>
-                  <th>Ro‘yxatdan o‘tgan</th>
+                  <th>{t('custPhone')}</th>
+                  <th>{t('custLang')}</th>
+                  <th>{t('custOrders')}</th>
+                  <th>{t('custJoined')}</th>
                   <th style={{ width: 50 }} />
                 </tr>
               </thead>
@@ -83,7 +85,7 @@ export default function Customers({ toast }) {
                     </td>
                     <td className="cell-sub">{date(u.createdAt)}</td>
                     <td>
-                      <button className="icon-btn" title="Xabar yuborish" onClick={() => setTarget(u)}>
+                      <button className="icon-btn" title={t('custMessage')} onClick={() => setTarget(u)}>
                         ✉️
                       </button>
                     </td>
@@ -99,7 +101,7 @@ export default function Customers({ toast }) {
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setTarget(null)}>
           <form className="modal" style={{ maxWidth: 460 }} onSubmit={send}>
             <div className="modal-head">
-              <h2>✉️ {target.firstName}ga xabar</h2>
+              <h2>{t('custMessageTo', target.firstName)}</h2>
               <button type="button" className="icon-btn" onClick={() => setTarget(null)}>
                 ✕
               </button>
@@ -108,16 +110,16 @@ export default function Customers({ toast }) {
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Xabar matni..."
+                placeholder={t('custMessageText')}
                 style={{ minHeight: 120 }}
               />
             </div>
             <div className="modal-foot">
               <button type="button" className="btn btn-outline" onClick={() => setTarget(null)}>
-                Bekor
+                {t('cancelShort')}
               </button>
               <button type="submit" className="btn" disabled={sending}>
-                {sending ? 'Yuborilmoqda...' : 'Yuborish'}
+                {sending ? t('sending') : t('send')}
               </button>
             </div>
           </form>

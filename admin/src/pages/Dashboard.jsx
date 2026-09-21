@@ -1,32 +1,35 @@
 import { money } from '../lib/format.js';
+import { useLang } from '../lib/lang.jsx';
+import { pick } from '../lib/i18n.js';
 
 export default function Dashboard({ stats, currency, onGoOrders }) {
+  const { t, lang } = useLang();
   if (!stats) return <div className="spinner" />;
 
   const cards = [
-    { label: '🆕 Yangi buyurtmalar', value: stats.newOrders, accent: true },
-    { label: '📅 Bugungi buyurtmalar', value: stats.todayOrders },
-    { label: '💰 Bugungi savdo', value: money(stats.todayRevenue, currency) },
-    { label: '📦 Jami buyurtmalar', value: stats.totalOrders },
-    { label: '✅ Yetkazilgan', value: stats.delivered },
-    { label: '💵 Umumiy savdo', value: money(stats.revenue, currency) },
-    { label: '👕 Mahsulotlar', value: stats.productCount },
-    { label: '👥 Mijozlar', value: stats.userCount },
+    { label: t('dashNewOrders'), value: stats.newOrders, accent: true },
+    { label: t('dashTodayOrders'), value: stats.todayOrders },
+    { label: t('dashTodayRevenue'), value: money(stats.todayRevenue, currency) },
+    { label: t('dashTotalOrders'), value: stats.totalOrders },
+    { label: t('dashDelivered'), value: stats.delivered },
+    { label: t('dashRevenue'), value: money(stats.revenue, currency) },
+    { label: t('dashProducts'), value: stats.productCount },
+    { label: t('dashCustomers'), value: stats.userCount },
   ];
 
   return (
     <>
       <div className="page-head">
         <div>
-          <h1>Boshqaruv paneli</h1>
+          <h1>{t('dashTitle')}</h1>
           <p>
             <span className="live-dot" />
-            Ma'lumotlar har 15 soniyada yangilanadi
+            {t('dashSub')}
           </p>
         </div>
         {stats.newOrders > 0 && (
           <button className="btn" onClick={onGoOrders}>
-            {stats.newOrders} ta yangi buyurtmani ko‘rish →
+            {t('dashGoOrders', stats.newOrders)}
           </button>
         )}
       </div>
@@ -45,21 +48,21 @@ export default function Dashboard({ stats, currency, onGoOrders }) {
       </div>
 
       <div className="panel">
-        <div className="panel-head">🔥 Eng ko‘p sotilgan mahsulotlar</div>
+        <div className="panel-head">{t('dashTopProducts')}</div>
         {stats.topProducts.length === 0 ? (
           <div className="empty-state">
             <div className="ico">📊</div>
-            Hali savdo bo‘lmagan
+            {t('dashNoSales')}
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th style={{ width: 60 }}>Rasm</th>
-                  <th>Nomi</th>
-                  <th>Narxi</th>
-                  <th>Sotilgan</th>
+                  <th style={{ width: 60 }}>{t('image')}</th>
+                  <th>{t('name')}</th>
+                  <th>{t('price')}</th>
+                  <th>{t('sold')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,10 +71,10 @@ export default function Dashboard({ stats, currency, onGoOrders }) {
                     <td>
                       <img className="thumb" src={p.images?.[0]} alt="" />
                     </td>
-                    <td className="cell-main">{p.nameUz}</td>
+                    <td className="cell-main">{pick(p, 'name', lang)}</td>
                     <td>{money(p.price, currency)}</td>
                     <td>
-                      <span className="badge green">{p.soldCount} dona</span>
+                      <span className="badge green">{t('pcs', p.soldCount)}</span>
                     </td>
                   </tr>
                 ))}

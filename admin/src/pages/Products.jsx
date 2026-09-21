@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import api, { imageUrl } from '../lib/api.js';
 import { money } from '../lib/format.js';
+import { useLang } from '../lib/lang.jsx';
+import { pick } from '../lib/i18n.js';
 import ProductForm from './ProductForm.jsx';
 
 export default function Products({ currency, toast }) {
+  const { t, lang } = useLang();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,20 +33,20 @@ export default function Products({ currency, toast }) {
   const save = async (data) => {
     if (editing === 'new') {
       await api.createProduct(data);
-      toast('Mahsulot qo‘shildi ✓');
+      toast(t('productAdded'));
     } else {
       await api.updateProduct(editing.id, data);
-      toast('Mahsulot yangilandi ✓');
+      toast(t('productUpdated'));
     }
     setEditing(null);
     load();
   };
 
   const remove = async (product) => {
-    if (!confirm(`"${product.nameUz}" o‘chirilsinmi?`)) return;
+    if (!confirm(t('removeConfirm', pick(product, 'name', lang)))) return;
     try {
       await api.deleteProduct(product.id);
-      toast('Mahsulot o‘chirildi');
+      toast(t('productRemoved'));
       load();
     } catch (err) {
       toast(err.message);
@@ -58,18 +61,18 @@ export default function Products({ currency, toast }) {
     <>
       <div className="page-head">
         <div>
-          <h1>Mahsulotlar</h1>
-          <p>Jami {products.length} ta</p>
+          <h1>{t('productsTitle')}</h1>
+          <p>{t('total', products.length)}</p>
         </div>
         <button className="btn" onClick={() => setEditing('new')}>
-          + Yangi mahsulot
+          {t('productsNew')}
         </button>
       </div>
 
       <div className="toolbar">
         <input
           type="text"
-          placeholder="Qidirish..."
+          placeholder={t('search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -81,20 +84,20 @@ export default function Products({ currency, toast }) {
         ) : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="ico">👕</div>
-            Mahsulot topilmadi
+            {t('productsNotFound')}
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th style={{ width: 58 }}>Rasm</th>
-                  <th>Nomi</th>
-                  <th>Kategoriya</th>
-                  <th>Narxi</th>
-                  <th>Omborda</th>
-                  <th>Sotilgan</th>
-                  <th>Holat</th>
+                  <th style={{ width: 58 }}>{t('image')}</th>
+                  <th>{t('name')}</th>
+                  <th>{t('colCategory')}</th>
+                  <th>{t('price')}</th>
+                  <th>{t('colStock')}</th>
+                  <th>{t('sold')}</th>
+                  <th>{t('statusCol')}</th>
                   <th style={{ width: 90 }} />
                 </tr>
               </thead>
@@ -108,7 +111,7 @@ export default function Products({ currency, toast }) {
                       </td>
 
                       <td>
-                        <div className="cell-main">{p.nameUz}</div>
+                        <div className="cell-main">{pick(p, 'name', lang)}</div>
                         <div className="cell-sub">
                           {p.brand}
                           {p.isNew && ' · NEW'}
@@ -117,7 +120,7 @@ export default function Products({ currency, toast }) {
                       </td>
 
                       <td>
-                        {p.category.emoji} {p.category.nameUz}
+                        {p.category.emoji} {pick(p.category, 'name', lang)}
                       </td>
 
                       <td>
@@ -131,24 +134,24 @@ export default function Products({ currency, toast }) {
 
                       <td>
                         <span className={`badge ${stock > 0 ? 'green' : 'cancelled'}`}>
-                          {stock} dona
+                          {t('pcs', stock)}
                         </span>
-                        <div className="cell-sub">{p.variants.length} variant</div>
+                        <div className="cell-sub">{t('variantsCount', p.variants.length)}</div>
                       </td>
 
                       <td>{p.soldCount}</td>
 
                       <td>
                         <span className={`badge ${p.isActive ? 'confirmed' : 'grey'}`}>
-                          {p.isActive ? 'Sotuvda' : 'Yashirin'}
+                          {p.isActive ? t('onSale') : t('hidden')}
                         </span>
                       </td>
 
                       <td>
-                        <button className="icon-btn" onClick={() => setEditing(p)} title="Tahrirlash">
+                        <button className="icon-btn" onClick={() => setEditing(p)} title={t('edit')}>
                           ✏️
                         </button>
-                        <button className="icon-btn" onClick={() => remove(p)} title="O‘chirish">
+                        <button className="icon-btn" onClick={() => remove(p)} title={t('remove')}>
                           🗑
                         </button>
                       </td>

@@ -122,6 +122,48 @@ a {
   color: var(--muted);
 }
 
+/* ===================== TIL TANLASH ===================== */
+.lang-switch {
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px 10px;
+}
+
+.lang-btn {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.lang-btn:hover {
+  color: var(--text);
+}
+
+.lang-btn.active {
+  color: #fff;
+  background: var(--text);
+  border-color: var(--text);
+}
+
+/* Kirish oynasida o'ng yuqori burchakda turadi */
+.login-lang {
+  justify-content: flex-end;
+  padding: 0 0 6px;
+}
+
+.login-lang .lang-btn {
+  flex: 0 0 auto;
+  min-width: 42px;
+}
+
+
 .main {
   flex: 1;
   min-width: 0;
@@ -833,9 +875,22 @@ code {
     padding: 18px 8px;
   }
   .sidebar .label,
-  .brand span,
-  .sidebar-foot {
+  .brand span {
     display: none;
+  }
+  /* Yon panel yig'ilganda ham til va chiqish tugmalari kerak —
+     aks holda telefondan tilni almashtirib bo'lmaydi. */
+  .sidebar-foot {
+    padding: 10px 2px 0;
+  }
+  .lang-switch {
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 0 8px;
+  }
+  .lang-btn {
+    padding: 4px 0;
+    font-size: 11px;
   }
   .nav-item {
     justify-content: center;

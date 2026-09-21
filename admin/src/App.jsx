@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import api, { getToken, clearToken } from './lib/api.js';
+import { useLang } from './lib/lang.jsx';
+import { LANGS } from './lib/i18n.js';
 
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -12,16 +14,17 @@ import Customers from './pages/Customers.jsx';
 import Settings from './pages/Settings.jsx';
 
 const NAV = [
-  { key: 'dashboard', icon: '📊', label: 'Boshqaruv' },
-  { key: 'orders', icon: '🧾', label: 'Buyurtmalar' },
-  { key: 'products', icon: '👕', label: 'Mahsulotlar' },
-  { key: 'categories', icon: '🏷', label: 'Kategoriyalar' },
-  { key: 'promos', icon: '🎟', label: 'Promokodlar' },
-  { key: 'customers', icon: '👥', label: 'Mijozlar' },
-  { key: 'settings', icon: '⚙️', label: 'Sozlamalar' },
+  { key: 'dashboard', icon: '📊', label: 'navDashboard' },
+  { key: 'orders', icon: '🧾', label: 'navOrders' },
+  { key: 'products', icon: '👕', label: 'navProducts' },
+  { key: 'categories', icon: '🏷', label: 'navCategories' },
+  { key: 'promos', icon: '🎟', label: 'navPromos' },
+  { key: 'customers', icon: '👥', label: 'navCustomers' },
+  { key: 'settings', icon: '⚙️', label: 'navSettings' },
 ];
 
 export default function App() {
+  const { t, lang, setLang } = useLang();
   const [auth, setAuth] = useState({ status: 'checking' });
   const [shop, setShop] = useState({ shopName: 'Admin', currency: "so'm" });
   const [page, setPage] = useState('dashboard');
@@ -89,7 +92,7 @@ export default function App() {
   }
 
   const logout = () => {
-    if (!confirm('Tizimdan chiqasizmi?')) return;
+    if (!confirm(t('logoutConfirm'))) return;
     clearToken();
     window.location.reload();
   };
@@ -108,7 +111,7 @@ export default function App() {
             onClick={() => setPage(item.key)}
           >
             <span>{item.icon}</span>
-            <span className="label">{item.label}</span>
+            <span className="label">{t(item.label)}</span>
             {item.key === 'orders' && stats?.newOrders > 0 && (
               <span className="nav-count">{stats.newOrders}</span>
             )}
@@ -116,9 +119,20 @@ export default function App() {
         ))}
 
         <div className="sidebar-foot">
+          <div className="lang-switch">
+            {LANGS.map((l) => (
+              <button
+                key={l.key}
+                className={`lang-btn ${lang === l.key ? 'active' : ''}`}
+                onClick={() => setLang(l.key)}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
           <button className="nav-item" onClick={logout} style={{ padding: '8px 10px' }}>
             <span>🚪</span>
-            <span className="label">Chiqish</span>
+            <span className="label">{t('logout')}</span>
           </button>
         </div>
       </aside>

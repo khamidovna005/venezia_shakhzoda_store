@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import ImageUploader from '../components/ImageUploader.jsx';
 import { api } from '../lib/api.js';
+import { useLang } from '../lib/lang.jsx';
+import { pick } from '../lib/i18n.js';
 
 const EMPTY = {
   nameUz: '',
@@ -46,6 +48,7 @@ const toForm = (product) =>
 const NEW_VARIANT = { size: '', colorUz: '', colorRu: '', colorHex: '#000000', stock: 0 };
 
 export default function ProductForm({ product, categories, onClose, onSave }) {
+  const { t, lang } = useLang();
   const [form, setForm] = useState(() => toForm(product));
   const [variants, setVariants] = useState(
     () =>
@@ -70,7 +73,7 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
   /** Birinchi rasmga qarab butun kartochkani to'ldiradi */
   async function fillFromImage() {
     const firstImage = form.images.split('\n').map((s) => s.trim()).filter(Boolean)[0];
-    if (!firstImage) return setError('Avval rasm yuklang — AI unga qarab yozadi');
+    if (!firstImage) return setError(t('aiNeedImage'));
 
     setError('');
     setAiBusy('product');
@@ -97,7 +100,7 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
 
   /** O'zbekcha matnlardan ruschasini yozadi */
   async function fillRussian() {
-    if (!form.nameUz.trim()) return setError("Avval o'zbekcha nomni yozing");
+    if (!form.nameUz.trim()) return setError(t('aiNeedUzName'));
 
     setError('');
     setAiBusy('translate');
@@ -135,9 +138,9 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
     e.preventDefault();
     setError('');
 
-    if (!form.nameUz.trim()) return setError('Mahsulot nomini kiriting');
-    if (!form.categoryId) return setError('Kategoriyani tanlang');
-    if (!Number(form.price)) return setError('Narxni kiriting');
+    if (!form.nameUz.trim()) return setError(t('errNeedName'));
+    if (!form.categoryId) return setError(t('errNeedCategory'));
+    if (!Number(form.price)) return setError(t('errNeedPrice'));
 
     setSaving(true);
     try {
@@ -158,7 +161,7 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <form className="modal" onSubmit={submit}>
         <div className="modal-head">
-          <h2>{product ? '✏️ Mahsulotni tahrirlash' : '➕ Yangi mahsulot'}</h2>
+          <h2>{product ? t('formEdit') : t('formNew')}</h2>
           <button type="button" className="icon-btn" onClick={onClose}>
             ✕
           </button>
@@ -169,43 +172,43 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
 
           <div className="form-grid">
             <div className="form-row">
-              <label>Nomi (UZ) *</label>
+              <label>{t('fNameUz')}</label>
               <input type="text" value={form.nameUz} onChange={set('nameUz')} />
             </div>
             <div className="form-row">
-              <label>Nomi (RU)</label>
+              <label>{t('fNameRu')}</label>
               <input type="text" value={form.nameRu} onChange={set('nameRu')} />
             </div>
 
             <div className="form-row">
-              <label>Kategoriya *</label>
+              <label>{t('fCategory')}</label>
               <select value={form.categoryId} onChange={set('categoryId')}>
-                <option value="">— tanlang —</option>
+                <option value="">{t('fChoose')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.emoji} {c.nameUz}
+                    {c.emoji} {pick(c, 'name', lang)}
                   </option>
                 ))}
               </select>
             </div>
             <div className="form-row">
-              <label>Brend</label>
+              <label>{t('fBrand')}</label>
               <input type="text" value={form.brand} onChange={set('brand')} />
             </div>
 
             <div className="form-row">
-              <label>Narxi (so'm) *</label>
+              <label>{t('fPrice')}</label>
               <input type="number" value={form.price} onChange={set('price')} />
             </div>
             <div className="form-row">
               <label>
-                Eski narxi <span className="hint">— chegirma ko‘rsatish uchun</span>
+                {t('fOldPrice')} <span className="hint">{t('fOldPriceHint')}</span>
               </label>
               <input type="number" value={form.oldPrice} onChange={set('oldPrice')} />
             </div>
 
             <div className="form-row full">
-              <label>Rasmlar</label>
+              <label>{t('fImages')}</label>
               <ImageUploader
                 value={form.images}
                 onChange={(images) => setForm((f) => ({ ...f, images }))}
@@ -216,10 +219,8 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
               <div className="form-row full">
                 <div className="ai-bar">
                   <div className="ai-bar-text">
-                    <b>✨ AI yordamchi</b>
-                    <span className="hint">
-                      Rasmga qarab nom, tavsif va xususiyatlarni o‘zi yozadi
-                    </span>
+                    <b>{t('aiTitle')}</b>
+                    <span className="hint">{t('aiHint')}</span>
                   </div>
                   <div className="ai-bar-actions">
                     <button
@@ -228,7 +229,7 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
                       onClick={fillFromImage}
                       disabled={Boolean(aiBusy)}
                     >
-                      {aiBusy === 'product' ? 'Yozilmoqda…' : '✨ Rasmdan to‘ldirish'}
+                      {aiBusy === 'product' ? t('aiWriting') : t('aiFromImage')}
                     </button>
                     <button
                       type="button"
@@ -236,7 +237,7 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
                       onClick={fillRussian}
                       disabled={Boolean(aiBusy)}
                     >
-                      {aiBusy === 'translate' ? 'Tarjima…' : '🌐 Ruschasini yozish'}
+                      {aiBusy === 'translate' ? t('aiTranslating') : t('aiRussian')}
                     </button>
                   </div>
                 </div>
@@ -244,45 +245,44 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
             )}
 
             <div className="form-row">
-              <label>Tavsif (UZ)</label>
+              <label>{t('fDescUz')}</label>
               <textarea value={form.descUz} onChange={set('descUz')} />
             </div>
             <div className="form-row">
-              <label>Tavsif (RU)</label>
+              <label>{t('fDescRu')}</label>
               <textarea value={form.descRu} onChange={set('descRu')} />
             </div>
 
             <div className="form-row">
               <label>
-                Xususiyatlari (UZ) <span className="hint">— har biri yangi qatordan</span>
+                {t('fFeaturesUz')} <span className="hint">{t('fFeaturesHint')}</span>
               </label>
               <textarea value={form.featuresUz} onChange={set('featuresUz')} />
             </div>
             <div className="form-row">
-              <label>Xususiyatlari (RU)</label>
+              <label>{t('fFeaturesRu')}</label>
               <textarea value={form.featuresRu} onChange={set('featuresRu')} />
             </div>
 
             <div className="form-row">
-              <label>Mato (UZ)</label>
+              <label>{t('fMaterialUz')}</label>
               <input type="text" value={form.materialUz} onChange={set('materialUz')} />
             </div>
             <div className="form-row">
-              <label>Mato (RU)</label>
+              <label>{t('fMaterialRu')}</label>
               <input type="text" value={form.materialRu} onChange={set('materialRu')} />
             </div>
 
             <div className="form-row full">
               <label>
-                O‘lcham va rang variantlari{' '}
-                <span className="hint">— ombordagi soni bilan</span>
+                {t('fVariants')} <span className="hint">{t('fVariantsHint')}</span>
               </label>
 
               <div className="variant-row" style={{ marginBottom: 4 }}>
-                <span className="hint">O‘lcham</span>
-                <span className="hint">Rang (UZ / RU)</span>
-                <span className="hint">Rang</span>
-                <span className="hint">Soni</span>
+                <span className="hint">{t('fSize')}</span>
+                <span className="hint">{t('fColorBoth')}</span>
+                <span className="hint">{t('fColor')}</span>
+                <span className="hint">{t('fCount')}</span>
                 <span />
               </div>
 
@@ -329,7 +329,7 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
                 style={{ marginTop: 6, alignSelf: 'flex-start' }}
                 onClick={() => setVariants([...variants, { ...NEW_VARIANT }])}
               >
-                + Variant qo‘shish
+                {t('fAddVariant')}
               </button>
             </div>
 
@@ -337,15 +337,15 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                 <label className="checkbox">
                   <input type="checkbox" checked={form.isActive} onChange={set('isActive')} />
-                  Sotuvda
+                  {t('onSale')}
                 </label>
                 <label className="checkbox">
                   <input type="checkbox" checked={form.isNew} onChange={set('isNew')} />
-                  Yangi (NEW belgisi)
+                  {t('fIsNew')}
                 </label>
                 <label className="checkbox">
                   <input type="checkbox" checked={form.isHit} onChange={set('isHit')} />
-                  Hit (bosh sahifada)
+                  {t('fIsHit')}
                 </label>
               </div>
             </div>
@@ -354,10 +354,10 @@ export default function ProductForm({ product, categories, onClose, onSave }) {
 
         <div className="modal-foot">
           <button type="button" className="btn btn-outline" onClick={onClose}>
-            Bekor qilish
+            {t('cancel')}
           </button>
           <button type="submit" className="btn" disabled={saving}>
-            {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+            {saving ? t('saving') : t('save')}
           </button>
         </div>
       </form>

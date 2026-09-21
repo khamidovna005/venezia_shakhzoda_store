@@ -12,23 +12,21 @@ export function date(value) {
   });
 }
 
-export const STATUS = {
-  NEW: { label: 'Yangi', cls: 'new' },
-  CONFIRMED: { label: 'Tasdiqlandi', cls: 'confirmed' },
-  SHIPPING: { label: "Yo'lda", cls: 'shipping' },
-  DELIVERED: { label: 'Yetkazildi', cls: 'delivered' },
-  CANCELLED: { label: 'Bekor qilindi', cls: 'cancelled' },
+// Holat nomlari i18n.js da (status_NEW, payment_CASH, payStatus_PENDING...).
+// Bu yerda faqat tilga bog'liq bo'lmagan narsalar qoladi.
+
+/** Buyurtma holatlari — tartibi ro'yxatda va tanlash oynasida shu bo'yicha */
+export const STATUS_KEYS = ['NEW', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'];
+
+/** Har bir holatning rang sinfi (styles.css dagi .badge.new, .badge.shipping...) */
+export const STATUS_CLASS = {
+  NEW: 'new',
+  CONFIRMED: 'confirmed',
+  SHIPPING: 'shipping',
+  DELIVERED: 'delivered',
+  CANCELLED: 'cancelled',
 };
 
-export const PAYMENT = {
-  CASH: 'Naqd',
-  CARD_TRANSFER: 'Karta',
-  PAYME: 'Payme',
-  CLICK: 'Click',
-};
+export const PAYMENT_KEYS = ['CASH', 'CARD_TRANSFER', 'PAYME', 'CLICK'];
 
-export const PAYMENT_STATUS = {
-  PENDING: 'Kutilmoqda',
-  PAID: "To'landi",
-  FAILED: 'Muvaffaqiyatsiz',
-};
+export const PAYMENT_STATUS_KEYS = ['PENDING', 'PAID', 'FAILED'];

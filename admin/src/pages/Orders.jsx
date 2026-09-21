@@ -1,20 +1,29 @@
 import { useCallback, useEffect, useState } from 'react';
 import api from '../lib/api.js';
-import { money, date, STATUS, PAYMENT, PAYMENT_STATUS } from '../lib/format.js';
+import {
+  money,
+  date,
+  STATUS_KEYS,
+  STATUS_CLASS,
+  PAYMENT_STATUS_KEYS,
+} from '../lib/format.js';
+import { useLang } from '../lib/lang.jsx';
+import { pick } from '../lib/i18n.js';
 
 const FILTERS = [
-  { key: 'ALL', label: 'Barchasi' },
-  { key: 'NEW', label: '🆕 Yangi' },
-  { key: 'CONFIRMED', label: '✅ Tasdiqlangan' },
-  { key: 'SHIPPING', label: "🚚 Yo'lda" },
-  { key: 'DELIVERED', label: '📦 Yetkazilgan' },
-  { key: 'CANCELLED', label: '❌ Bekor' },
+  { key: 'ALL', label: 'filterAll' },
+  { key: 'NEW', label: 'filterNew' },
+  { key: 'CONFIRMED', label: 'filterConfirmed' },
+  { key: 'SHIPPING', label: 'filterShipping' },
+  { key: 'DELIVERED', label: 'filterDelivered' },
+  { key: 'CANCELLED', label: 'filterCancelled' },
 ];
 
 /** Bir marta yuklanadigan buyurtmalar soni */
 const PAGE = 50;
 
 export default function Orders({ currency, toast, onChanged }) {
+  const { t, lang } = useLang();
   const [orders, setOrders] = useState([]);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('ALL');
@@ -64,7 +73,7 @@ export default function Orders({ currency, toast, onChanged }) {
   const changeStatus = async (order, next) => {
     try {
       await api.setOrderStatus(order.id, next);
-      toast(`${order.orderNo} → ${STATUS[next].label}. Mijozga botda xabar yuborildi.`);
+      toast(t('orderStatusChanged', order.orderNo, t(`status_${next}`)));
       load({ silent: true, pages });
       onChanged?.();
     } catch (err) {
@@ -75,7 +84,7 @@ export default function Orders({ currency, toast, onChanged }) {
   const changePayment = async (order, next) => {
     try {
       await api.setPaymentStatus(order.id, next);
-      toast(`${order.orderNo} to‘lovi: ${PAYMENT_STATUS[next]}`);
+      toast(t('orderPaymentChanged', order.orderNo, t(`payStatus_${next}`)));
       load({ silent: true, pages });
     } catch (err) {
       toast(err.message);
@@ -83,10 +92,10 @@ export default function Orders({ currency, toast, onChanged }) {
   };
 
   const remove = async (order) => {
-    if (!confirm(`${order.orderNo} buyurtmasi o‘chirilsinmi?`)) return;
+    if (!confirm(t('orderRemoveConfirm', order.orderNo))) return;
     try {
       await api.deleteOrder(order.id);
-      toast('Buyurtma o‘chirildi');
+      toast(t('orderRemoved'));
       load({ silent: true, pages });
       onChanged?.();
     } catch (err) {
@@ -98,17 +107,15 @@ export default function Orders({ currency, toast, onChanged }) {
     <>
       <div className="page-head">
         <div>
-          <h1>Buyurtmalar</h1>
+          <h1>{t('ordersTitle')}</h1>
           <p>
             <span className="live-dot" />
-            {orders.length < total
-              ? `${orders.length} / ${total} ta ko‘rsatilmoqda`
-              : `Jami ${total} ta`}{' '}
-            · avtomatik yangilanadi
+            {orders.length < total ? t('ordersShowing', orders.length, total) : t('total', total)} ·{' '}
+            {t('autoRefresh')}
           </p>
         </div>
         <button className="btn btn-ghost" onClick={() => load({ pages })}>
-          ↻ Yangilash
+          {t('refresh')}
         </button>
       </div>
 
@@ -120,13 +127,13 @@ export default function Orders({ currency, toast, onChanged }) {
               className={`tab ${status === f.key ? 'active' : ''}`}
               onClick={() => setStatus(f.key)}
             >
-              {f.label}
+              {t(f.label)}
             </button>
           ))}
         </div>
         <input
           type="text"
-          placeholder="Raqam, ism yoki telefon..."
+          placeholder={t('ordersSearch')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ marginLeft: 'auto' }}
@@ -139,20 +146,20 @@ export default function Orders({ currency, toast, onChanged }) {
         ) : orders.length === 0 ? (
           <div className="empty-state">
             <div className="ico">📭</div>
-            Buyurtmalar topilmadi
+            {t('ordersNotFound')}
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Buyurtma</th>
-                  <th>Mijoz</th>
-                  <th>Mahsulotlar</th>
-                  <th>Manzil</th>
-                  <th>To‘lov</th>
-                  <th>Summa</th>
-                  <th>Holat</th>
+                  <th>{t('colOrder')}</th>
+                  <th>{t('colCustomer')}</th>
+                  <th>{t('colItems')}</th>
+                  <th>{t('colAddress')}</th>
+                  <th>{t('colPayment')}</th>
+                  <th>{t('colSum')}</th>
+                  <th>{t('statusCol')}</th>
                   <th />
                 </tr>
               </thead>
@@ -176,9 +183,10 @@ export default function Orders({ currency, toast, onChanged }) {
                       <div className="items-list">
                         {order.items.map((item, i) => (
                           <div key={i}>
-                            <b>{item.nameUz}</b>
+                            <b>{pick(item, 'name', lang)}</b>
                             {item.size && ` · ${item.size}`}
-                            {item.colorUz && ` · ${item.colorUz}`} × {item.qty}
+                            {pick(item, 'color', lang) && ` · ${pick(item, 'color', lang)}`} ×{' '}
+                            {item.qty}
                           </div>
                         ))}
                       </div>
@@ -194,7 +202,7 @@ export default function Orders({ currency, toast, onChanged }) {
                               target="_blank"
                               rel="noreferrer"
                             >
-                              📍 Xaritada
+                              {t('onMap')}
                             </a>
                           </div>
                         )}
@@ -204,16 +212,16 @@ export default function Orders({ currency, toast, onChanged }) {
 
                     <td>
                       <div className="cell-sub" style={{ marginBottom: 4 }}>
-                        {PAYMENT[order.paymentMethod]}
+                        {t(`payment_${order.paymentMethod}`)}
                       </div>
                       <select
                         className="compact"
                         value={order.paymentStatus}
                         onChange={(e) => changePayment(order, e.target.value)}
                       >
-                        {Object.entries(PAYMENT_STATUS).map(([key, label]) => (
+                        {PAYMENT_STATUS_KEYS.map((key) => (
                           <option key={key} value={key}>
-                            {label}
+                            {t(`payStatus_${key}`)}
                           </option>
                         ))}
                       </select>
@@ -235,21 +243,21 @@ export default function Orders({ currency, toast, onChanged }) {
                         value={order.status}
                         onChange={(e) => changeStatus(order, e.target.value)}
                       >
-                        {Object.entries(STATUS).map(([key, val]) => (
+                        {STATUS_KEYS.map((key) => (
                           <option key={key} value={key}>
-                            {val.label}
+                            {t(`status_${key}`)}
                           </option>
                         ))}
                       </select>
                       <div style={{ marginTop: 5 }}>
-                        <span className={`badge ${STATUS[order.status].cls}`}>
-                          {STATUS[order.status].label}
+                        <span className={`badge ${STATUS_CLASS[order.status]}`}>
+                          {t(`status_${order.status}`)}
                         </span>
                       </div>
                     </td>
 
                     <td>
-                      <button className="icon-btn" title="O‘chirish" onClick={() => remove(order)}>
+                      <button className="icon-btn" title={t('remove')} onClick={() => remove(order)}>
                         🗑
                       </button>
                     </td>
@@ -264,7 +272,9 @@ export default function Orders({ currency, toast, onChanged }) {
         {!loading && orders.length < total && (
           <div className="load-more">
             <button className="btn btn-ghost" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? 'Yuklanmoqda…' : `↓ Yana ${Math.min(PAGE, total - orders.length)} ta`}
+              {loadingMore
+                ? t('loading')
+                : t('ordersLoadMore', Math.min(PAGE, total - orders.length))}
             </button>
           </div>
         )}

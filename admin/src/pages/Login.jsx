@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import api, { setToken } from '../lib/api.js';
+import { useLang } from '../lib/lang.jsx';
+import { LANGS } from '../lib/i18n.js';
 
 export default function Login({ onSuccess }) {
+  const { t, lang, setLang } = useLang();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,13 +31,26 @@ export default function Login({ onSuccess }) {
   return (
     <div className="login">
       <form className="login-card" onSubmit={submit}>
-        <h1>🛍 Admin Panel</h1>
-        <p>Do‘konni boshqarish uchun tizimga kiring</p>
+        <div className="lang-switch login-lang">
+          {LANGS.map((l) => (
+            <button
+              key={l.key}
+              type="button"
+              className={`lang-btn ${lang === l.key ? 'active' : ''}`}
+              onClick={() => setLang(l.key)}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+
+        <h1>{t('loginTitle')}</h1>
+        <p>{t('loginSub')}</p>
 
         {error && <div className="alert error">{error}</div>}
 
         <div className="form-row" style={{ marginBottom: 14 }}>
-          <label htmlFor="login">Login</label>
+          <label htmlFor="login">{t('loginField')}</label>
           <input
             id="login"
             type="text"
@@ -47,7 +63,7 @@ export default function Login({ onSuccess }) {
         </div>
 
         <div className="form-row">
-          <label htmlFor="password">Parol</label>
+          <label htmlFor="password">{t('passwordField')}</label>
           <div className="password-wrap">
             <input
               id="password"
@@ -69,13 +85,10 @@ export default function Login({ onSuccess }) {
         </div>
 
         <button className="btn" style={{ width: '100%', marginTop: 20 }} disabled={loading}>
-          {loading ? 'Tekshirilmoqda...' : 'Kirish'}
+          {loading ? t('loginChecking') : t('loginBtn')}
         </button>
 
-        <p style={{ marginTop: 18, marginBottom: 0, fontSize: 12.5 }}>
-          Login va parol <code>backend/.env</code> faylidagi <code>ADMIN_LOGIN</code> va{' '}
-          <code>ADMIN_PASSWORD</code> qatorlarida saqlanadi.
-        </p>
+        <p style={{ marginTop: 18, marginBottom: 0, fontSize: 12.5 }}>{t('loginHint')}</p>
       </form>
     </div>
   );

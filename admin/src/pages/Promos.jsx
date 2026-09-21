@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api.js';
 import { money, date } from '../lib/format.js';
+import { useLang } from '../lib/lang.jsx';
 
 const EMPTY = {
   code: '',
@@ -15,6 +16,7 @@ const EMPTY = {
 };
 
 export default function Promos({ currency, toast }) {
+  const { t } = useLang();
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(EMPTY);
@@ -40,7 +42,7 @@ export default function Promos({ currency, toast }) {
     if (!form.code.trim()) return;
     try {
       await api.createPromo({ ...form, expiresAt: form.expiresAt || null });
-      toast('Promokod yaratildi ✓');
+      toast(t('promoCreated'));
       setForm(EMPTY);
       load();
     } catch (err) {
@@ -60,7 +62,7 @@ export default function Promos({ currency, toast }) {
   const togglePublic = async (promo) => {
     try {
       await api.updatePromo(promo.id, { ...promo, isPublic: !promo.isPublic });
-      toast(promo.isPublic ? `${promo.code} endi maxfiy` : `${promo.code} do‘konda ko‘rinadi`);
+      toast(promo.isPublic ? t('promoNowSecret', promo.code) : t('promoNowVisible', promo.code));
       load();
     } catch (err) {
       toast(err.message);
@@ -68,10 +70,10 @@ export default function Promos({ currency, toast }) {
   };
 
   const remove = async (promo) => {
-    if (!confirm(`${promo.code} o‘chirilsinmi?`)) return;
+    if (!confirm(t('promoRemoveConfirm', promo.code))) return;
     try {
       await api.deletePromo(promo.id);
-      toast('O‘chirildi');
+      toast(t('removed'));
       load();
     } catch (err) {
       toast(err.message);
@@ -82,17 +84,17 @@ export default function Promos({ currency, toast }) {
     <>
       <div className="page-head">
         <div>
-          <h1>Promokodlar</h1>
-          <p>Mijozlar savatchada kiritadigan chegirma kodlari</p>
+          <h1>{t('promoTitle')}</h1>
+          <p>{t('promoSub')}</p>
         </div>
       </div>
 
       <div className="panel" style={{ marginBottom: 20 }}>
-        <div className="panel-head">➕ Yangi promokod</div>
+        <div className="panel-head">{t('promoNew')}</div>
         <form className="modal-body" onSubmit={add}>
           <div className="form-grid">
             <div className="form-row">
-              <label>Kod</label>
+              <label>{t('promoCode')}</label>
               <input
                 type="text"
                 value={form.code}
@@ -101,17 +103,19 @@ export default function Promos({ currency, toast }) {
               />
             </div>
             <div className="form-row">
-              <label>Turi</label>
+              <label>{t('promoType')}</label>
               <select
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
               >
-                <option value="PERCENT">Foizda (%)</option>
-                <option value="FIXED">Belgilangan summa</option>
+                <option value="PERCENT">{t('promoPercent')}</option>
+                <option value="FIXED">{t('promoFixed')}</option>
               </select>
             </div>
             <div className="form-row">
-              <label>{form.type === 'PERCENT' ? 'Necha foiz' : "Necha so'm"}</label>
+              <label>
+                {form.type === 'PERCENT' ? t('promoHowMuchPercent') : t('promoHowMuchSum')}
+              </label>
               <input
                 type="number"
                 value={form.value}
@@ -120,7 +124,7 @@ export default function Promos({ currency, toast }) {
             </div>
             <div className="form-row">
               <label>
-                Minimal summa <span className="hint">— 0 = cheklovsiz</span>
+                {t('promoMinTotal')} <span className="hint">{t('promoMinHint')}</span>
               </label>
               <input
                 type="number"
@@ -130,7 +134,7 @@ export default function Promos({ currency, toast }) {
             </div>
             <div className="form-row">
               <label>
-                Ishlatish limiti <span className="hint">— 0 = cheksiz</span>
+                {t('promoLimit')} <span className="hint">{t('promoLimitHint')}</span>
               </label>
               <input
                 type="number"
@@ -139,7 +143,7 @@ export default function Promos({ currency, toast }) {
               />
             </div>
             <div className="form-row">
-              <label>Amal qilish muddati</label>
+              <label>{t('promoExpires')}</label>
               <input
                 type="date"
                 value={form.expiresAt}
@@ -153,16 +157,13 @@ export default function Promos({ currency, toast }) {
                   checked={form.isPublic}
                   onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
                 />
-                Do‘konda ko‘rsatish
+                {t('promoShowInShop')}
               </label>
-              <span className="hint">
-                Belgilansa — mijozlar do‘kon sahifasida bu kodni ko‘radi va bir bosishda
-                nusxalaydi. Belgilanmasa — kod ishlaydi, lekin faqat siz aytgan odam biladi.
-              </span>
+              <span className="hint">{t('promoShowHint')}</span>
             </div>
           </div>
           <button className="btn" style={{ marginTop: 14 }} type="submit">
-            Yaratish
+            {t('create')}
           </button>
         </form>
       </div>
@@ -173,20 +174,20 @@ export default function Promos({ currency, toast }) {
         ) : promos.length === 0 ? (
           <div className="empty-state">
             <div className="ico">🎟</div>
-            Promokodlar yo‘q
+            {t('promoNone')}
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Kod</th>
-                  <th>Chegirma</th>
-                  <th>Min. summa</th>
-                  <th>Ishlatilgan</th>
-                  <th>Muddati</th>
-                  <th>Ko‘rinishi</th>
-                  <th>Holat</th>
+                  <th>{t('promoCode')}</th>
+                  <th>{t('promoDiscount')}</th>
+                  <th>{t('promoMinShort')}</th>
+                  <th>{t('promoUsed')}</th>
+                  <th>{t('promoExpiryShort')}</th>
+                  <th>{t('promoVisibility')}</th>
+                  <th>{t('statusCol')}</th>
                   <th style={{ width: 50 }} />
                 </tr>
               </thead>
@@ -207,13 +208,9 @@ export default function Promos({ currency, toast }) {
                       <button
                         className={`badge ${p.isPublic ? 'new' : 'grey'}`}
                         onClick={() => togglePublic(p)}
-                        title={
-                          p.isPublic
-                            ? 'Mijozlar do‘konda ko‘radi — bosib yashirasiz'
-                            : 'Faqat siz aytgan odam biladi — bosib ko‘rsatasiz'
-                        }
+                        title={p.isPublic ? t('promoVisibleTitle') : t('promoSecretTitle')}
                       >
-                        {p.isPublic ? '👁 Ko‘rinadi' : '🔒 Maxfiy'}
+                        {p.isPublic ? t('promoVisible') : t('promoSecret')}
                       </button>
                     </td>
                     <td>
@@ -221,7 +218,7 @@ export default function Promos({ currency, toast }) {
                         className={`badge ${p.isActive ? 'confirmed' : 'grey'}`}
                         onClick={() => toggle(p)}
                       >
-                        {p.isActive ? 'Faol' : "O'chiq"}
+                        {p.isActive ? t('active') : t('disabled')}
                       </button>
                     </td>
                     <td>
