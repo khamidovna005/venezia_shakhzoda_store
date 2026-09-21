@@ -1,0 +1,53 @@
+# Botni uyg'oq tutadi.
+#
+# Nega kerak: bot "polling" usulida ishlaydi — server o'zi Telegram'dan
+# xabar so'rab turadi. Render bepul tarifida 15 daqiqa jimlikdan keyin
+# serverni uxlatadi. Uxlagach bot butunlay jim bo'ladi va o'zi uyg'ona
+# olmaydi, chunki Telegram serverga murojaat qilmaydi.
+#
+# Nega kechasi ishlamaydi: Render bepul tarifi oyiga 750 soat beradi va u
+# hamma xizmatlar uchun umumiy. 24/7 uyg'oq tutish ~730 soat yeydi — zaxira
+# qolmaydi. Shuning uchun faqat do'kon ishlaydigan vaqtda turtamiz:
+# Toshkent vaqti bilan 06:00–23:59 (UTC+5), oyiga ~540 soat.
+
+name: Botni uyg'oq tutish
+
+on:
+  schedule:
+    # UTC 01:00–18:59 = Toshkent 06:00–23:59
+    - cron: '*/10 1-18 * * *'
+  workflow_dispatch: # kerak bo'lsa qo'lda ishga tushirish uchun
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Serverni turtish
+        run: |
+          MANZIL="https://venezia-shakhzoda-store-1.onrender.com/api/health"
+
+          # Uyqudan uyg'onish 60 soniyagacha cho'zilishi mumkin.
+          # 3 marta urinamiz — bitta uzilish butun ishni yiqitmasin.
+          for URINISH in 1 2 3; do
+            JAVOB=$(curl -s -m 90 -w "\n%{http_code}" "$MANZIL" || true)
+            KOD=$(echo "$JAVOB" | tail -n1)
+            TANA=$(echo "$JAVOB" | sed '$d')
+
+            echo "[$URINISH-urinish] HTTP $KOD — $TANA"
+
+            if [ "$KOD" = "200" ]; then
+              # Server javob berdi. Baza ham ulanganini tekshiramiz:
+              # server tirik, lekin baza uzilgan bo'lsa bot baribir ishlamaydi.
+              if echo "$TANA" | grep -q '"db":"ulangan"'; then
+                echo "✅ Server va baza ishlayapti"
+                exit 0
+              fi
+              echo "⚠️  Server tirik, lekin baza ulanmagan"
+              exit 1
+            fi
+
+            sleep 20
+          done
+
+          echo "❌ Server 3 urinishda ham javob bermadi"
+          exit 1
